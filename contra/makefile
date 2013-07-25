@@ -4,7 +4,7 @@
 #    Last modified:	August 17, 2005
 #
 #-------------------  macro definitions  -------------------------------
-FC       = g77
+FC       = gfortran
 CC       = gcc
 OPTS     = -O
 FFLAGS   = -O -Wall
