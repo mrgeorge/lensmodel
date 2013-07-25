@@ -1,0 +1,14 @@
+This is a modified version of Gnedin's CONTRA code for calculating halo contraction.
+
+I've used SWIG to allow python to interact with the C code as a module. If the C code is updated, use the following commands to re-compile:
+
+swig -python contra.i
+cc -c `python-config --cflags` contra.c contra_wrap.c
+cc -bundle `python-config --ldflags` contra.o contra_wrap.o -o _contra.so
+
+May need to update contra.i with new function headers, etc. from contra.c
+Then, in python, you can access the contra functions using 
+import contra
+contra.pymain(...)
+
+-MRG 7.25.13
