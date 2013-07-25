@@ -27,8 +27,9 @@
 #define nmax 1001
 #define pi   3.14159265358979323846
 int DM, BAR, MAC, NUM, ANIS, n=81, n3=101;   //n=81 n3=101
-double c, fb, rb, ra, ser_dm, ser_b, TRACE, Rmax = 3.0;
-double ri[nmax], rf[nmax], mhi[nmax], mhf[nmax], 
+//double c, fb, rb, ra, ser_dm, ser_b, TRACE, Rmax = 3.0; // replaced by MRG following contra_aw.c
+double c, fb, rb, ra, ser_dm, ser_b, TRACE, Rmax=3., A=0.85, w=0.8, r0=0.03;
+double ri[nmax], rf[nmax], mhi[nmax], mhf[nmax],
   rhohi[nmax], rhohf[nmax], mhi_av[nmax], g[nmax],
   rhot[nmax], mtot[nmax], sigma_los[nmax],
   logri[nmax], logrf[nmax], logrbf[nmax], logmbi[nmax], logmbf[nmax],
@@ -55,19 +56,22 @@ double mdm( double x, double c )    /* initial dark matter mass distribution */
   double f=0.0, a, arg, argc, logmh, dlogmh;
 
   if(DM==1) {                       /* Navarro, Frenk & White (1997) model */
-    f = (log(1.+c*x) - c*x/(1.+c*x))/(log(1.+c) - c/(1.+c));
+    //    f = (log(1.+c*x) - c*x/(1.+c*x))/(log(1.+c) - c/(1.+c)); // replaced by MRG following contra_aw.c
+    f = (1.-fb)*(log(1.+c*x) - c*x/(1.+c*x))/(log(1.+c) - c/(1.+c));
   }
   if(DM==2) {                       /* Navarro et al. (2004): */
     a = 3.*ser_dm;                  /* spherical Sersic model */
     arg = 2.*ser_dm*pow(x*c, 1./ser_dm);
     argc = 2.*ser_dm*pow(c, 1./ser_dm);
-    f = gammp_(&a, &arg)/gammp_(&a, &argc);
+    //    f = gammp_(&a, &arg)/gammp_(&a, &argc); // replaced by MRG following contra_aw.c
+    f = (1.-fb)*gammp_(&a, &arg)/gammp_(&a, &argc);
   }
   if(DM==3) {                       /* Kazantzidis et al. (2004) profile */
     a = 2.0;
     arg = x*c;
     argc = c;
-    f = gammp_(&a, &arg)/gammp_(&a, &argc);
+    //    f = gammp_(&a, &arg)/gammp_(&a, &argc); // replaced by MRG following contra_aw.c
+    f = (1.-fb)*gammp_(&a, &arg)/gammp_(&a, &argc);
   }
   if(NUM) {
     logmh = DSpline(log(x), n, logri, logmhi, Msmhi, &dlogmh);
@@ -81,8 +85,10 @@ double y( double x, double *d )
 {
   double f;
   if(MAC) {                   /* Modified model of AC */
-    f = 0.85*pow(x,0.8);
-    *d = 0.85*0.8*pow(x,-0.2);
+    //    f = 0.85*pow(x,0.8); // replaced by MRG following contra_aw.c
+    //    *d = 0.85*0.8*pow(x,-0.2); // replaced by MRG following contra_aw.c
+    f = r0*A*pow(x/r0,w);
+    *d = A*w*pow(x/r0,w-1.);
   } else {                    /* Standard model of AC */ 
     f = x;
     *d = 1.0;
