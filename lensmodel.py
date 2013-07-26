@@ -6,6 +6,7 @@ import esutil
 import collections
 import scipy.interpolate
 import scipy.integrate
+import contra
 
 cosmo=esutil.cosmology.Cosmo(h=0.7,omega_m=0.3,omega_l=0.7)
 # distance convention will be physical kpc/h70
@@ -270,8 +271,47 @@ def deltaSigmaPS(Rkpc, mass):
 ####
 # Wrappers to CONTRA for contracted profiles
 ####
-def rhoAC(rkpc):
-    pass
+def rhoAC(rkpc, mhalo, conc, od, Aac, wac, mstars, rstars):
+    """Return contracted profile at rkpc in Msun/kpc**3.
+    Calls Gnedin's CONTRA code and goes to NFW beyond rhalo.
+    """
+
+    # Get contracted profile from Contra
+    BAR=2 # 1 = exponential disk, 2 = Hernquist
+    fb=mstars/mhalo
+    rhalo=haloRadius(mhalo, od)
+    rb=rstars/rhalo
+    nrad=81
+    acProfile=contra.contra(BAR, conc, fb, rb, Aac, wac, nrad)
+
+    # convert profile to physical units
+    rcontra=acProfile[0]*rhalo # kpc
+    rhocontra=acProfile[1]*mhalo/rhalo**3 # Msun/kpc
+
+    # extend AC profile using NFW outside virial radius
+    extFactor=10.
+    rExt,rhoExt=appendRhoNFW(rcontra,rhocontra,rhalo,conc,od,extFactor)
+    
+    # interpolate onto rkpc
+    logInterp=scipy.interpolate.UnivariateSpline(np.log10(rExt),np.log10(rhoExt),s=0) # cubic spline interpolation on log axes. Allows extrapolation.
+    rhoAC=10.**logInterp(np.log10(rkpc))
+
+    return rhoAC
+
+
+def appendRhoNFW(rkpc,rho,rhalo,conc,od,extFactor):
+    """Append NFW density profile from rhalo to extFactor*rhalo with log-spacing similar to input profile."""
+    nOld=len(rkpc)
+    nExt=nOld * np.log10(extFactor/1.1)/np.log10(rkpc[-1]/rkpc[0]) # how many points on the extension
+    rExt=rhalo*1.1 * np.logspace(0,np.log10(extFactor),num=nExt)
+
+    mhalo=haloMass(rhalo, od)
+    rhoExt=rhoNFW(rExt, mhalo, conc, od)
+
+    rNew=np.append(rkpc,rExt)
+    rhoNew=np.append(rho,rhoExt)
+    return (rNew,rhoNew)
+
 
 ####
 # Scaling relations
