@@ -39,14 +39,22 @@ int pymain(int MACin, int DMin, int BARin, double TRACEin, int ANISin, double ci
     }
     $result = o;
 }
-/*%typemap(argout) double rhofout[ANY]{
-    PyObject *o = PyList_New($1_dim0);
-    int i;
-    for(i=0; i<$1_dim0; i++)
-    {
-        PyList_SetItem(o, i, PyFloat_FromDouble($1[i]));
-    }
-    $result = o;
-}
-*/
 int pymain(int MACin, int DMin, int BARin, double TRACEin, int ANISin, double cin, double ser_dmin, double fbin, double rbin, double ser_bin, double rain, double Ain, double win, int nrad, double rfout[nmax], double rhofout[nmax]);
+
+%pythoncode{
+  def cleanOutput(out,nrad):
+     import numpy as np
+     arr=np.array(out)
+     return arr.reshape((2,len(arr)/2))[:,:nrad]
+
+  def contra(BAR, conc, fb, rb, A, w, nrad):
+     MAC=1 # Gnedin model
+     DM=1 # NFW
+     TRACE=0
+     ANIS=0
+     ser_dm=0
+     ser_b=0
+     ra=0
+     out=pymain(MAC,DM,BAR,TRACE,ANIS,conc,ser_dm,fb,rb,ser_b,ra,A,w,nrad)
+     return cleanOutput(out,nrad)
+}
