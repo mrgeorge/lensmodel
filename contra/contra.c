@@ -306,7 +306,7 @@ double tracer_density( double x )              /* tracer population density */
 }
 
 
-int pymain(int MACin, int DMin, int BARin, double TRACEin, int ANISin, double cin, double ser_dmin, double fbin, double rbin, double ser_bin, double rain, double Ain, double win, int nrad, double rfout[nmax])
+int pymain(int MACin, int DMin, int BARin, double TRACEin, int ANISin, double cin, double ser_dmin, double fbin, double rbin, double ser_bin, double rain, double Ain, double win, int nrad, double rfout[nmax], double rhofout[nmax])
 {
   int i, i0, tr;
   double x, d, mi_av, mbi, mbi_av, mbf, rbf,
@@ -317,6 +317,7 @@ int pymain(int MACin, int DMin, int BARin, double TRACEin, int ANISin, double ci
   int NUM=0;
 
   memset(rfout, 0, nmax*sizeof(double));
+  memset(rhofout, 0, nmax*sizeof(double));
 
   // set global vars from inputs
   MAC=MACin;
@@ -334,13 +335,14 @@ int pymain(int MACin, int DMin, int BARin, double TRACEin, int ANISin, double ci
   w=win;
   n=nrad;
 
+
   if((DM < 1 || DM > 3) && !NUM) { fprintf(stderr, ": DM distribution must be 1, 2 or 3\n"); return 1; }
   if((BAR < 1 || BAR > 4) && !NUM) { fprintf(stderr, ": baryon distribution must be 1, 2, 3 or 4\n"); return 1; }
   if(ANIS < 0 || ANIS > 3) { fprintf(stderr, ": anisotropy parameter must be 0, 1, 2 or 3\n"); return 1; }
   if(TRACE > 7) { fprintf(stderr, ": tracer population must be 1, 2, 3, 4, 5, 6, 7 or negative as a power law slope\n"); return 1; }
 
   //  printf("#"); for(i=0; i<argc; i++) printf(" %s", argv[i]); printf("\n");
-  if(MAC >= 1) printf("# Modified model of Adiabatic Contraction\n");
+/*  if(MAC >= 1) printf("# Modified model of Adiabatic Contraction\n");
   if(MAC == 0) printf("# Standard model of Adiabatic Contraction\n");
   if(MAC == -1) printf("# No adiabatic contraction\n");
   if(NUM) {
@@ -360,27 +362,27 @@ int pymain(int MACin, int DMin, int BARin, double TRACEin, int ANISin, double ci
     if(TRACE<6 && BAR<4 && ser_b>0.0) Rmax = ser_b;
     printf("# los velocity dispersion integrated out to %g R_vir\n", Rmax);
   }
-
-  if(NUM) {
-    /* Read numerical profiles */
-    if( (in = fopen( infile, "r" )) == NULL )
-      { printf("Can't open input file <%s>\n", infile); exit(1); }
-    i=0;
-    while(!feof(in)) {
-      fscanf(in,"%le %le %le %le %le %le",ri+i, &mbi, mhi+i, &rbf, &mbf, rhot+i);
-      logri[i] = log(ri[i]);
-      logmhi[i] = log(mhi[i]);
-      logmbi[i] = log(mbi);
-      logrbf[i] = log(rbf);
-      logmbf[i] = log(mbf);
-      i++;
-      if(i>nmax) { fprintf(stderr, ": not enough memory for input arrays, increase nmax (currently nmax=%d)\n", nmax); return(1); }
-    }
-    fclose(in);
-    n = n3 = i-1;
-    Spline_Install(n, logri, logmbi, Msmbi);
-    Spline_Install(n, logrbf, logmbf, Msmbf);   
-  } else {
+*/
+//  if(NUM) {
+//    /* Read numerical profiles */
+//    if( (in = fopen( infile, "r" )) == NULL )
+//      { printf("Can't open input file <%s>\n", infile); exit(1); }
+//    i=0;
+//    while(!feof(in)) {
+//      fscanf(in,"%le %le %le %le %le %le",ri+i, &mbi, mhi+i, &rbf, &mbf, rhot+i);
+//      logri[i] = log(ri[i]);
+//      logmhi[i] = log(mhi[i]);
+//      logmbi[i] = log(mbi);
+//      logrbf[i] = log(rbf);
+//      logmbf[i] = log(mbf);
+//      i++;
+//      if(i>nmax) { fprintf(stderr, ": not enough memory for input arrays, increase nmax (currently nmax=%d)\n", nmax); return(1); }
+//    }
+//    fclose(in);
+//    n = n3 = i-1;
+//    Spline_Install(n, logri, logmbi, Msmbi);
+//    Spline_Install(n, logrbf, logmbf, Msmbf);   
+//  } else {
     /* Set up initial radial grid */
     for(i=0; i<n3; i++) {
       ri[i] = pow(10., 4.*(double)(i-n+1)/(double)(n-1));
@@ -389,7 +391,7 @@ int pymain(int MACin, int DMin, int BARin, double TRACEin, int ANISin, double ci
       logmhi[i] = log(mhi[i]);
       rhot[i] = tracer_density(ri[i]);
     }
-  }
+//  }
   Spline_Install(n, logri, logmhi, Msmhi);
 
   /* Remap initial mass distributions on the average orbital radii */
@@ -426,45 +428,46 @@ int pymain(int MACin, int DMin, int BARin, double TRACEin, int ANISin, double ci
     logmhf = DSpline(logri[i], n, logrf, logmhi, Ms, &dlogmhf);
     mhf[i] = exp(logmhf);
     rhohf[i] = dlogmhf*mhf[i]/(4.*pi*pow(ri[i],3));
+    rhofout[i]=rhohf[i];
     logrhohf[i] = log(rhohf[i]);
     DSpline(logri[i], n, logri, logmhi, Msmhi, &dlogmhi);
     rhohi[i] = dlogmhi*mhi[i]/(4.*pi*pow(ri[i],3));
     logrhohi[i] = log(rhohi[i]);
   }
-  Spline_Install(n, logri, logrhohi, Msrhoi);
-  Spline_Install(n, logri, logrhohf, Msrhof);
-
-  /* Logarithmic slopes of density distributions */
-  for(i=0; i<n; i++) {
-    DSpline(logri[i], n, logri, logrhohi, Msrhoi, dlogrhohi+i);
-    DSpline(logri[i], n, logri, logrhohf, Msrhof, dlogrhohf+i);
-  }
-
-  /* Total mass profile (baryons + dark matter) */
-  for(i=0; i<n; i++)
-    mtot[i] = mhf[i] + mb(ri[i],&d);
-  for(i=n; i<n3; i++)
-    mtot[i] = mdm(ri[i],c);
-
-  /* Line-of-sight velocity dispersion of a tracer population
-     integrated from 0 to Rmax, following Mamon & Lokas 2005 */
-
-  if(Rmax > ri[n3-1]) Rmax = ri[n3-1];
-
-  if(TRACE)
-    { printf("ERROR: TRACE disabled"); exit(1); } // Added by MRG to avoid linking to los.f
-    //    losdispersion_(ri, mtot, rhot, &ANIS, &ra, &n3, &Rmax, sigma_los);
-
-  /* suppress output of unphysical solutions */
-  //i0 = n-1;
-  //while(-dlogrhohf[i0] >= 0.0 && i0 >= 0) i0--; i0++;
-  i0 = 0;
-
-  printf("#\n# r_i       r_f       m_i       m_f       rho_i     rho_f   gam_i gam_f   v_circ  sigma_los\n");
-  for(i=i0; i<n; i++)
-    printf("%9.3e %9.3e %9.3e %9.3e %9.3e %9.3e %5.3f %5.3f %9.3e %9.3e\n",
-	   ri[i], rf[i], mhi[i], mhf[i], rhohi[i], rhohf[i], 
-	   -dlogrhohi[i], -dlogrhohf[i], sqrt(mtot[i]/ri[i]), sigma_los[i]);
+  //  Spline_Install(n, logri, logrhohi, Msrhoi);
+  //  Spline_Install(n, logri, logrhohf, Msrhof);
+  //
+  //  /* Logarithmic slopes of density distributions */
+  //  for(i=0; i<n; i++) {
+  //    DSpline(logri[i], n, logri, logrhohi, Msrhoi, dlogrhohi+i);
+  //    DSpline(logri[i], n, logri, logrhohf, Msrhof, dlogrhohf+i);
+  //  }
+  //
+  //  /* Total mass profile (baryons + dark matter) */
+  //  for(i=0; i<n; i++)
+  //    mtot[i] = mhf[i] + mb(ri[i],&d);
+  //  for(i=n; i<n3; i++)
+  //    mtot[i] = mdm(ri[i],c);
+  //
+  //  /* Line-of-sight velocity dispersion of a tracer population
+  //     integrated from 0 to Rmax, following Mamon & Lokas 2005 */
+  //
+  //  if(Rmax > ri[n3-1]) Rmax = ri[n3-1];
+  //
+  //  if(TRACE)
+  //    { printf("ERROR: TRACE disabled"); exit(1); } // Added by MRG to avoid linking to los.f
+  //    //    losdispersion_(ri, mtot, rhot, &ANIS, &ra, &n3, &Rmax, sigma_los);
+  //
+  //  /* suppress output of unphysical solutions */
+  //  //i0 = n-1;
+  //  //while(-dlogrhohf[i0] >= 0.0 && i0 >= 0) i0--; i0++;
+  //  i0 = 0;
+  //
+  //  printf("#\n# r_i       r_f       m_i       m_f       rho_i     rho_f   gam_i gam_f   v_circ  sigma_los\n");
+  //  for(i=i0; i<n; i++)
+  //    printf("%9.3e %9.3e %9.3e %9.3e %9.3e %9.3e %5.3f %5.3f %9.3e %9.3e\n",
+  //	   ri[i], rf[i], mhi[i], mhf[i], rhohi[i], rhohf[i], 
+  //	   -dlogrhohi[i], -dlogrhohf[i], sqrt(mtot[i]/ri[i]), sigma_los[i]);
   return 0;
 }
 
