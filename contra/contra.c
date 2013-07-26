@@ -21,6 +21,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <string.h> // for memset
 
 #define sqr(x)  ((x)*(x))
 
@@ -305,7 +306,7 @@ double tracer_density( double x )              /* tracer population density */
 }
 
 
-int pymain(int MACin, int DMin, int BARin, double TRACEin, int ANISin, double cin, double ser_dmin, double fbin, double rbin, double ser_bin, double rain, double Ain, double win)
+int pymain(int MACin, int DMin, int BARin, double TRACEin, int ANISin, double cin, double ser_dmin, double fbin, double rbin, double ser_bin, double rain, double Ain, double win, int nrad, double rfout[nmax])
 {
   int i, i0, tr;
   double x, d, mi_av, mbi, mbi_av, mbf, rbf,
@@ -314,6 +315,8 @@ int pymain(int MACin, int DMin, int BARin, double TRACEin, int ANISin, double ci
   FILE *in;
 
   int NUM=0;
+
+  memset(rfout, 0, nmax*sizeof(double));
 
   // set global vars from inputs
   MAC=MACin;
@@ -329,6 +332,7 @@ int pymain(int MACin, int DMin, int BARin, double TRACEin, int ANISin, double ci
   ra=rain;
   A=Ain;
   w=win;
+  n=nrad;
 
   if((DM < 1 || DM > 3) && !NUM) { fprintf(stderr, ": DM distribution must be 1, 2 or 3\n"); return 1; }
   if((BAR < 1 || BAR > 4) && !NUM) { fprintf(stderr, ": baryon distribution must be 1, 2, 3 or 4\n"); return 1; }
@@ -413,6 +417,7 @@ int pymain(int MACin, int DMin, int BARin, double TRACEin, int ANISin, double ci
       rf[i] = rtsafe(funcd, 1.e-3*ri[i], 2.*ri[i], 1.e-10, mhi_av[i], g[i]);
       logrf[i] = log(rf[i]);
     }
+    rfout[i]=rf[i];
   }
   Spline_Install(n, logrf, logmhi, Ms);
 

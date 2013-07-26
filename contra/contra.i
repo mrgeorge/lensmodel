@@ -1,44 +1,32 @@
 %module contra
 %{
 // Headers from contra.c
-double mdm( double x, double c );
-double y( double x, double *d );
-double mb( double x, double *d );
-void funcd( double r, double *f, double *df, double mhi, double g );
-double tracer_density( double x );
-int pymain(int MAC, int DM, int BAR, double TRACE, int ANIS, double c, double ser_dm, double fb, double rb, double ser_b, double ra, double A, double w);
-int main( int argc, char *argv[] );
-
-
-// Headers from spline.c
-#define Nsi 999       /* required by Spline_Install */
-
-void Spline_Install(int n,double x[],double y[],double Ms[] ) ;
-double DSpline(double z,int n,double x[],double y[],double Ms[],double *Derivative );
-
-#define MAXIT 100
-double rtsafe(void (*funcd)(double, double *, double *, double, double), double x1, double x2,
-	      double xacc, double par1, double par2);
-
+#define nmax 1001
+int pymain(int MACin, int DMin, int BARin, double TRACEin, int ANISin, double cin, double ser_dmin, double fbin, double rbin, double ser_bin, double rain, double Ain, double win, int nrad, double rfout[nmax]);
 %}
 
-// Headers from contra.c
-double mdm( double x, double c );
-double y( double x, double *d );
-double mb( double x, double *d );
-void funcd( double r, double *f, double *df, double mhi, double g );
-double tracer_density( double x );
-int pymain(int MAC, int DM, int BAR, double TRACE, int ANIS, double c, double ser_dm, double fb, double rb, double ser_b, double ra, double A, double w);
-int main( int argc, char *argv[] );
+// The arg list for pymain in contra has arrays meant to be filled as return values
+// These typemaps eliminate the need to send these arrays as inputs from a python call
+//   instead filling a blank array to send to the C code.
+%typemap(in,numinputs=0) double rfout[ANY] (double temp[$1_dim0]) {
+  int i;
+  for (i = 0; i < $1_dim0; i++) {
+    temp[i] = 0;
+  }
+  $1 = temp;
+}
 
+// The arg list for pymain in contra has arrays meant to be filled as return values
+// These typemaps add those arrays to the list of outputs returned by the C code
+//   so they are received as lists by the python call.
+%typemap(argout) double rfout[ANY]{
+    PyObject *o = PyList_New($1_dim0);
+    int i;
+    for(i=0; i<$1_dim0; i++)
+    {
+        PyList_SetItem(o, i, PyFloat_FromDouble($1[i]));
+    }
+    $result = o;
+}
 
-// Headers from spline.c
-#define Nsi 999       /* required by Spline_Install */
-
-void Spline_Install(int n,double x[],double y[],double Ms[] ) ;
-double DSpline(double z,int n,double x[],double y[],double Ms[],double *Derivative );
-
-#define MAXIT 100
-double rtsafe(void (*funcd)(double, double *, double *, double, double), double x1, double x2,
-	      double xacc, double par1, double par2);
-
+int pymain(int MACin, int DMin, int BARin, double TRACEin, int ANISin, double cin, double ser_dmin, double fbin, double rbin, double ser_bin, double rain, double Ain, double win, int nrad, double rfout[nmax]);
