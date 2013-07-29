@@ -48,7 +48,7 @@ def interpretPriors(priors):
     """
 
     # Define initial guess and range for emcee
-    # Recall pars=logMstars, logRstars, logMhalo, conc, innerSlopeGNFW, nuDutton, AGnedin, wGnedin
+    # Recall pars=[logMstars, logRstars, logMhalo, conc, innerSlopeGNFW, nuDutton, AGnedin, wGnedin]
     guess=np.array([     10.,0.5,13.,5.0,1.0,0.8,1.6,1.0])
     guessScale=np.array([ 1.,0.5, 1.,2.0,0.2,0.3,0.3,0.3])
     nPars=len(guess) # Number of pars in FULL MODEL (some may get fixed and not be sent to emcee)
@@ -75,7 +75,7 @@ def interpretPriors(priors):
                     elif(len(prior)==4):
                         priorMean=np.copy(prior[0])
                         priorSigma=np.copy(prior[1])
-                        priorRange=np.copy((prior[2:])
+                        priorRange=np.copy(prior[2:])
                         priorFuncs[ii]=makeGaussTruncPrior(priorMean,priorSigma,priorRange)
                     else:
                         raise ValueError(prior)
@@ -172,7 +172,7 @@ def runMCMC(priors, xshear, yshear, errshear, xmag, ymag, errmag,redshift=0.,cen
     
     # SETUP PARS and PRIORS
     priorFuncs,fixed,guess,guessScale = interpretPriors(priors)
-    nPars=len(guess)
+    nPars=len(guess) # Number of free parameters to be fitted
 
     # RUN MCMC
     np.random.seed(seed)
