@@ -78,7 +78,7 @@ def interpretPriors(priors):
 ####
 # Evaluate Likelihood
 ####
-def lnProb(modelPars, priorFuncs, fixed, xshear, yshear, errshear, xmag, ymag, errmag):
+def lnProb(modelPars, priorFuncs, fixed, xshear, yshear, errshear, xmag, ymag, errmag, redshift, cenType, delta, odType):
     """Return ln(P(model|data)) = -0.5*chisq to evaluate likelihood surface.
 
     Take model parameters, priors, and data and compute chisq=sum[((model-data)/error)**2].
@@ -123,16 +123,16 @@ def lnProb(modelPars, priorFuncs, fixed, xshear, yshear, errshear, xmag, ymag, e
 	chisq_like=0.
     else:
 	if((xshear is not None) & (xmag is None)): # Shear only
-            model=profiles.deltaSigma(fullPars, xshear)
+            model=profiles.deltaSigma(fullPars, xshear, redshift=redshift, cenType=cenType, delta=delta, odType=odType)
 	    data=yshear
 	    error=errshear
         elif((xshear is None) & (xmag is not None)): # Magnification only
-	    model=profiles.sigma(fullPars, xmag)
+	    model=profiles.sigma(fullPars, xmag, redshift=redshift, cenType=cenType, delta=delta, odType=odType)
 	    data=ymag
 	    error=errmag
         elif((xshear is not None) & (xmag is not None)): # Shear + Magnification
-            shearmodel=profiles.deltaSigma(fullPars,xshear)
-            magmodel=profiles.sigma(fullPars,xmag)
+            shearmodel=profiles.deltaSigma(fullPars,xshear, redshift=redshift, cenType=cenType, delta=delta, odType=odType)
+            magmodel=profiles.sigma(fullPars,xmag, redshift=redshift, cenType=cenType, delta=delta, odType=odType)
 	    model=np.concatenate([shearmodel,magmodel])
 	    data=np.concatenate([yshear,ymag])
 	    error=np.concatenate([errshear,errmag])
@@ -144,7 +144,7 @@ def lnProb(modelPars, priorFuncs, fixed, xshear, yshear, errshear, xmag, ymag, e
 ####
 # MCMC
 ####
-def runMCMC(priors, xshear, yshear, errshear, xmag, ymag, errmag,nWalkers=2000,nBurn=50,nSteps=250,seed=None):
+def runMCMC(priors, xshear, yshear, errshear, xmag, ymag, errmag,redshift=0.,cenType="hernquist",delta=200.,odType="critical",nWalkers=2000,nBurn=50,nSteps=250,seed=None):
     """Call emcee and return sampler.
 
     See interpretPriors for format of priors array.
@@ -157,7 +157,7 @@ def runMCMC(priors, xshear, yshear, errshear, xmag, ymag, errmag,nWalkers=2000,n
     # RUN MCMC
     np.random.seed(seed)
     walkerStart=np.array([np.random.randn(nWalkers)*guessScale[ii]+guess[ii] for ii in xrange(nPars)]).T
-    sampler=emcee.EnsembleSampler(nWalkers,nPars,lnProb,args=[priorFuncs, fixed, xshear, yshear, errshear, xmag, ymag, errmag])
+    sampler=emcee.EnsembleSampler(nWalkers,nPars,lnProb,args=[priorFuncs, fixed, xshear, yshear, errshear, xmag, ymag, errmag, redshift, cenType, delta, odType])
     print "emcee burnin"
     pos, prob, state = sampler.run_mcmc(walkerStart,nBurn)
     sampler.reset()
