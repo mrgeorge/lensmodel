@@ -1,1 +1,1 @@
-from lensmodel import *
+import profiles

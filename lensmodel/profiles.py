@@ -2,11 +2,11 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
-import esutil
 import collections
 import scipy.interpolate
 import scipy.integrate
 import contra
+import esutil
 
 cosmo=esutil.cosmology.Cosmo(h=0.7,omega_m=0.3,omega_l=0.7)
 # distance convention will be physical kpc/h70
