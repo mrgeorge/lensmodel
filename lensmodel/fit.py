@@ -95,15 +95,18 @@ def interpretPriors(priors):
 
     return (priorFuncs,fixed,guess,guessScale)
 
+def testPriors():
+    return [10.,0.5,(13.,1),[3.,8.],1.0,[-0.2,1.0],-1.,-1.]
+
 ####
 # Evaluate Likelihood
 ####
-def lnProb(modelPars, priorFuncs, fixed, xshear, yshear, errshear, xmag, ymag, errmag, redshift, cenType, delta, odType):
+def lnProb(pars, priorFuncs, fixed, xshear, yshear, errshear, xmag, ymag, errmag, redshift, cenType, delta, odType):
     """Return ln(P(model|data)) = -0.5*chisq to evaluate likelihood surface.
 
     Take model parameters, priors, and data and compute chisq=sum[((model-data)/error)**2].
     Inputs:
-        modelPars - ndarray of N model parameters to be fit (N<=M)
+        pars - ndarray of N model parameters to be fit (N<=M)
         priorFuncs - ndarray of N functions
         fixed - ndarray of M full model parameters, either None (for free pars) or the value to fix to
             (priorFuncs and fixed are generally from interpretPriors)
