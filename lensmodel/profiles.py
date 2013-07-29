@@ -19,7 +19,10 @@ cosmo=esutil.cosmology.Cosmo(h=0.7,omega_m=0.3,omega_l=0.7)
 def rho(pars, rkpc, redshift=0., cenType="hernquist", delta=200., odType="critical"):
 
     # Unpack model parameters
-    mstars, rstars, mhalo, conc, innerSlopeGNFW, nuDutton, AGnedin, wGnedin = pars
+    logMstars, logRstars, logMhalo, conc, innerSlopeGNFW, nuDutton, AGnedin, wGnedin = pars
+    mstars=10.**logMstars
+    rstars=10.**logRstars
+    mhalo=10.**logMhalo
     od=overdensity(redshift, delta=delta, type=odType)
 
     # Stellar term
@@ -57,7 +60,10 @@ def rho(pars, rkpc, redshift=0., cenType="hernquist", delta=200., odType="critic
 def sigma(pars, Rkpc, redshift=0., cenType="hernquist", delta=200., odType="critical"):
 
     # Unpack model parameters
-    mstars, rstars, mhalo, conc, innerSlopeGNFW, nuDutton, AGnedin, wGnedin = pars
+    logMstars, logRstars, logMhalo, conc, innerSlopeGNFW, nuDutton, AGnedin, wGnedin = pars
+    mstars=10.**logMstars
+    rstars=10.**logRstars
+    mhalo=10.**logMhalo
     od=overdensity(redshift, delta=delta, type=odType)
 
     # Stellar term
@@ -96,7 +102,10 @@ def sigma(pars, Rkpc, redshift=0., cenType="hernquist", delta=200., odType="crit
 def deltaSigma(pars, Rkpc, redshift=0., cenType="hernquist", delta=200., odType="critical"):
 
     # Unpack model parameters
-    mstars, rstars, mhalo, conc, innerSlopeGNFW, nuDutton, AGnedin, wGnedin = pars
+    logMstars, logRstars, logMhalo, conc, innerSlopeGNFW, nuDutton, AGnedin, wGnedin = pars
+    mstars=10.**logMstars
+    rstars=10.**logRstars
+    mhalo=10.**logMhalo
     od=overdensity(redshift, delta=delta, type=odType)
 
     # Stellar term
