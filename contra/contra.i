@@ -2,7 +2,7 @@
 %{
 // Headers from contra.c
 #define nmax 1001
-int pymain(int MACin, int DMin, int BARin, double TRACEin, int ANISin, double cin, double ser_dmin, double fbin, double rbin, double ser_bin, double rain, double Ain, double win, int nrad, double rfout[nmax], double rhofout[nmax]);
+int pymain(int MACin, int BARin, double cin, double fbin, double rbin, double nuin, double Ain, double win, int nrad, double rfout[nmax], double rhofout[nmax]);
 %}
 
 // The arg list for pymain in contra has arrays meant to be filled as return values
@@ -39,7 +39,7 @@ int pymain(int MACin, int DMin, int BARin, double TRACEin, int ANISin, double ci
     }
     $result = o;
 }
-int pymain(int MACin, int DMin, int BARin, double TRACEin, int ANISin, double cin, double ser_dmin, double fbin, double rbin, double ser_bin, double rain, double Ain, double win, int nrad, double rfout[nmax], double rhofout[nmax]);
+int pymain(int MACin, int BARin, double cin, double fbin, double rbin, double nuin, double Ain, double win, int nrad, double rfout[nmax], double rhofout[nmax]);
 
 %pythoncode{
   def cleanOutput(out,nrad):
@@ -47,14 +47,7 @@ int pymain(int MACin, int DMin, int BARin, double TRACEin, int ANISin, double ci
      arr=np.array(out)
      return arr.reshape((2,len(arr)/2))[:,:nrad]
 
-  def contra(BAR, conc, fb, rb, A, w, nrad):
-     MAC=1 # Gnedin model
-     DM=1 # NFW
-     TRACE=0
-     ANIS=0
-     ser_dm=0
-     ser_b=0
-     ra=0
-     out=pymain(MAC,DM,BAR,TRACE,ANIS,conc,ser_dm,fb,rb,ser_b,ra,A,w,nrad)
+  def contra(MAC, BAR, conc, fb, rb, nu, A, w, nrad):
+     out=pymain(MAC,BAR,conc,fb,rb,nu,A,w,nrad)
      return cleanOutput(out,nrad)
 }
