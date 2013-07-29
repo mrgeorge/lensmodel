@@ -16,17 +16,121 @@ cosmo=esutil.cosmology.Cosmo(h=0.7,omega_m=0.3,omega_l=0.7)
 ####
 # Top Level (generic) Density and Mass Profiles
 ####
-def rho(rkpc, mass, conc, redshift, haloType="nfw", cenType="ps", delta=200., odType="critical", beta=None, rhern=None):
-    pass
+def rho(pars, rkpc, redshift=0., cenType="hernquist", delta=200., odType="critical"):
 
-def sigma(Rkpc):
-    pass
+    # Unpack model parameters
+    mstars, rstars, mhalo, conc, innerSlopeGNFW, nuDutton, AGnedin, wGnedin = pars
+    od=overdensity(redshift, delta=delta, type=odType)
 
-def deltaSigma(Rkpc):
-    pass
+    # Stellar term
+    if(cenType=="ps"):
+        rhoStars=rkpc * 0.
+    elif(cenType=="hernquist"):
+        rhoStars=rhoHernquist(rkpc, mstars, rstars)        
+    else:
+        raise ValueError(cenType)
 
-def massEnclosed(rkpc):
-    pass
+    # Halo term
+    if(innerSlopeGNFW != 1.): # GNFW
+                              # ignore all Dutton/Gnedin pars
+        rhoHalo=rhoGNFW(rkpc, mhalo, conc, innerSlopeGNFW, od)
+    elif(nuDutton != 0.): # Dutton's contraction model
+                          # ignore all GNFW/Gnedin pars
+        MAC=2
+        rhoHalo=rhoAC(rkpc, mhalo, conc, od, MAC, nuDutton, AGnedin, wGnedin, mstars, rstars)
+    elif((AGnedin == 1.) & (wGnedin == 1.)): # Blumenthal AC
+                                             # ignore all GNFW/Dutton/Gnedin pars
+        MAC=0
+        rhoHalo=rhoAC(rkpc, mhalo, conc, od, MAC, nuDutton, AGnedin, wGnedin, mstars, rstars)
+    elif((AGnedin > 0) & (wGnedin > 0)): # Gnedin modified AC
+                                         # ignore all GNFW/Dutton pars
+        MAC=1
+        rhoHalo=rhoAC(rkpc, mhalo, conc, od, MAC, nuDutton, AGnedin, wGnedin, mstars, rstars)
+    else: # vanilla NFW
+          # ignore all GNFW/Dutton/Gnedin pars
+        rhoHalo=rhoNFW(rkpc, mhalo, conc, od)
+
+    rhoTot=rhoStars+rhoHalo
+
+    return rhoTot
+
+def sigma(pars, Rkpc, redshift=0., cenType="hernquist", delta=200., odType="critical"):
+
+    # Unpack model parameters
+    mstars, rstars, mhalo, conc, innerSlopeGNFW, nuDutton, AGnedin, wGnedin = pars
+    od=overdensity(redshift, delta=delta, type=odType)
+
+    # Stellar term
+    if(cenType=="ps"):
+        sigStars=Rkpc * 0.
+    elif(cenType=="hernquist"):
+        sigStars=sigmaHernquist(Rkpc, mstars, rstars)
+    else:
+        raise ValueError(cenType)
+
+    # Halo term
+    if(innerSlopeGNFW != 1.): # GNFW
+                              # ignore all Dutton/Gnedin pars
+        sigHalo=sigmaGNFW(Rkpc, mhalo, conc, innerSlopeGNFW, od)
+    elif(nuDutton != 0.): # Dutton's contraction model
+                          # ignore all GNFW/Gnedin pars
+        MAC=2
+        sigHalo=sigmaAC(Rkpc, mhalo, conc, od, MAC, nuDutton, AGnedin, wGnedin, mstars, rstars)
+    elif((AGnedin == 1.) & (wGnedin == 1.)): # Blumenthal AC
+                                             # ignore all GNFW/Dutton/Gnedin pars
+        MAC=0
+        sigHalo=sigmaAC(Rkpc, mhalo, conc, od, MAC, nuDutton, AGnedin, wGnedin, mstars, rstars)
+    elif((AGnedin > 0) & (wGnedin > 0)): # Gnedin modified AC
+                                         # ignore all GNFW/Dutton pars
+        MAC=1
+        sigHalo=sigmaAC(Rkpc, mhalo, conc, od, MAC, nuDutton, AGnedin, wGnedin, mstars, rstars)
+    else: # vanilla NFW
+          # ignore all GNFW/Dutton/Gnedin pars
+        sigHalo=sigmaNFW(Rkpc, mhalo, conc, od)
+
+    sigTot=sigStars+sigHalo
+
+    return sigTot
+
+
+def deltaSigma(pars, Rkpc, redshift=0., cenType="hernquist", delta=200., odType="critical"):
+
+    # Unpack model parameters
+    mstars, rstars, mhalo, conc, innerSlopeGNFW, nuDutton, AGnedin, wGnedin = pars
+    od=overdensity(redshift, delta=delta, type=odType)
+
+    # Stellar term
+    if(cenType=="ps"):
+        dsStars=Rkpc * 0.
+    elif(cenType=="hernquist"):
+        dsStars=deltaSigmaHernquist(Rkpc, mstars, rstars)
+    else:
+        raise ValueError(cenType)
+
+    # Halo term
+    if(innerSlopeGNFW != 1.): # GNFW
+                              # ignore all Dutton/Gnedin pars
+        dsHalo=deltaSigmaGNFW(Rkpc, mhalo, conc, innerSlopeGNFW, od)
+    elif(nuDutton != 0.): # Dutton's contraction model
+                          # ignore all GNFW/Gnedin pars
+        MAC=2
+        dsHalo=deltaSigmaAC(Rkpc, mhalo, conc, od, MAC, nuDutton, AGnedin, wGnedin, mstars, rstars)
+    elif((AGnedin == 1.) & (wGnedin == 1.)): # Blumenthal AC
+                                             # ignore all GNFW/Dutton/Gnedin pars
+        MAC=0
+        dsHalo=deltaSigmaAC(Rkpc, mhalo, conc, od, MAC, nuDutton, AGnedin, wGnedin, mstars, rstars)
+    elif((AGnedin > 0) & (wGnedin > 0)): # Gnedin modified AC
+                                         # ignore all GNFW/Dutton pars
+        MAC=1
+        dsHalo=deltaSigmaAC(Rkpc, mhalo, conc, od, MAC, nuDutton, AGnedin, wGnedin, mstars, rstars)
+    else: # vanilla NFW
+          # ignore all GNFW/Dutton/Gnedin pars
+        dsHalo=deltaSigmaNFW(Rkpc, mhalo, conc, od)
+
+    dsTot=dsStars+dsHalo
+
+    return dsTot
+
 
 ####
 # Profile conversions via integration
@@ -310,6 +414,18 @@ def appendRhoNFW(rkpc,rho,rhalo,conc,od,extFactor):
     rNew=np.append(rkpc,rExt)
     rhoNew=np.append(rho,rhoExt)
     return (rNew,rhoNew)
+
+def sigmaAC(Rkpc, mhalo, conc, od, MAC, nuDutton, AGnedin, wGnedin, mstars, rstars):
+    """Return surface mass density for contracted profile in Msun/kpc**2.
+    Simply calls rhoToSigma, lacking an analytic profile.
+    """
+    return rhoToSigma(Rkpc, rhoAC(Rkpc, mhalo, conc, od, MAC, nuDutton, AGnedin, wGnedin, mstars, rstars))
+
+def deltaSigmaAC(Rkpc, mhalo, conc, od, MAC, nuDutton, AGnedin, wGnedin, mstars, rstars):
+    """Return DS for contracted profile in Msun/kpc**2.
+    Simply calls sigmaToDeltaSigma, lacking an analytic profile.
+    """
+    return sigmaToDeltaSigma(Rkpc, sigmaAC(Rkpc, mhalo, conc, od, MAC, nuDutton, AGnedin, wGnedin, mstars, rstars))
 
 
 ####
