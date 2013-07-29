@@ -12,6 +12,8 @@ def simData():
 ####
 # Priors
 ####
+
+# These generate functions used in lnProb to compute chisq_prior
 def makeFlatPrior(range):
     return lambda x: priorFlat(x, range)
 
@@ -24,6 +26,9 @@ def priorFlat(arg, range):
 def makeGaussPrior(mean, sigma):
     return lambda x: ((x-mean)/sigma)**2
 
+def makeGaussTruncPrior(mean, sigma, range):
+    return lambda x: ((x-mean)/sigma)**2 + priorFlat(x, range)
+    
 def interpretPriors(priors):
     """Generate functions to evaluate priors and fix variables.
 
@@ -33,6 +38,7 @@ def interpretPriors(priors):
             float - fix the variable to this value
             list[a,b] - flat prior between a and b
             tuple(a,b) - gaussian prior with mean a and stddev b
+            tuple(a,b,c,d) - gaussian prior with mean a and stddev b, truncated at c and d
 
     Returns:
         priorFuncs - ndarray of length N (# of free parameters to fit)
@@ -41,9 +47,12 @@ def interpretPriors(priors):
         guessScale - ndarray of length N with scale for range of initial guesses
     """
 
-    guess=np.array([10.,0.1,100.,0.,0.]) # TO DO!
-    guessScale=np.array([10.,0.3,50.,0.02,0.02]) # TO DO!
-    nPars=len(guess)
+    # Define initial guess and range for emcee
+    # Recall pars=logMstars, logRstars, logMhalo, conc, innerSlopeGNFW, nuDutton, AGnedin, wGnedin
+    guess=np.array([     10.,0.5,13.,5.0,1.0,0.8,1.6,1.0])
+    guessScale=np.array([ 1.,0.5, 1.,2.0,0.2,0.3,0.3,0.3])
+    nPars=len(guess) # Number of pars in FULL MODEL (some may get fixed and not be sent to emcee)
+
     fixed=np.repeat(None, nPars)
     priorFuncs=np.repeat(None, nPars)
     if(priors is not None):
@@ -59,9 +68,20 @@ def interpretPriors(priors):
 		    priorRange=np.copy(prior)
 		    priorFuncs[ii]=makeFlatPrior(priorRange)
 		elif(type(prior) is tuple):
-		    priorMean=np.copy(prior[0])
-		    priorSigma=np.copy(prior[1])
-		    priorFuncs[ii]=makeGaussPrior(priorMean,priorSigma)
+                    if(len(prior)==2):
+                        priorMean=np.copy(prior[0])
+                        priorSigma=np.copy(prior[1])
+                        priorFuncs[ii]=makeGaussPrior(priorMean,priorSigma)
+                    elif(len(prior)==4):
+                        priorMean=np.copy(prior[0])
+                        priorSigma=np.copy(prior[1])
+                        priorRange=np.copy((prior[2:])
+                        priorFuncs[ii]=makeGaussTruncPrior(priorMean,priorSigma,priorRange)
+                    else:
+                        raise ValueError(prior)
+                else:
+                    raise ValueError(prior)
+
 
     # remove fixed entries from list of pars to fit
     delarr=np.array([])
