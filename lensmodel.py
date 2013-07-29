@@ -230,7 +230,7 @@ def rhoHernquist(rkpc, mass, rhern):
     rhern is the scale radius 'a' used in Eq. 2 of Hernquist 1990
     a=rhalf/(1.+sqrt(2)) where rhalf is the 3d half-mass radius
     """
-    rho=mass/(2.*np.pi) * (rhern/rkpc) * 1./(rkpc+a)**3
+    rho=mass/(2.*np.pi) * (rhern/rkpc) * 1./(rkpc+rhern)**3
     return rho
 
 def sigmaHernquist(Rkpc, mass, rhern):
@@ -271,18 +271,18 @@ def deltaSigmaPS(Rkpc, mass):
 ####
 # Wrappers to CONTRA for contracted profiles
 ####
-def rhoAC(rkpc, mhalo, conc, od, Aac, wac, mstars, rstars):
+def rhoAC(rkpc, mhalo, conc, od, MAC, nuac, Aac, wac, mstars, rstars):
     """Return contracted profile at rkpc in Msun/kpc**3.
     Calls Gnedin's CONTRA code and goes to NFW beyond rhalo.
     """
 
     # Get contracted profile from Contra
     BAR=2 # 1 = exponential disk, 2 = Hernquist
-    fb=mstars/mhalo
+    fb=mstars/(mhalo+mstars) # baryon/total mass fraction
     rhalo=haloRadius(mhalo, od)
     rb=rstars/rhalo
     nrad=81
-    acProfile=contra.contra(BAR, conc, fb, rb, Aac, wac, nrad)
+    acProfile=contra.contra(MAC, BAR, conc, fb, rb, nuac, Aac, wac, nrad)
 
     # convert profile to physical units
     rcontra=acProfile[0]*rhalo # kpc
