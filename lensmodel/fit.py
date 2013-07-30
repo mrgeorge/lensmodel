@@ -193,6 +193,33 @@ def runMCMC(priors, xshear, yshear, errshear, xmag, ymag, errmag,redshift=0.,cen
 
     return sampler
 
+def fitObs(priors,xshear,yshear,errshear,xmag,ymag,errmag,**kwargs):
+    """Wrapper to runMCMC to compare chains with shear, magnification, and combined observables.
+    Passes kwargs to vmapFit
+    """
+
+    print "Magnification"
+    samplerM=runMCMC(priors,None,None,None,xmag,ymag,errmag,**kwargs)
+    print "Shear"
+    samplerS=runMCMC(priors,xshear,yshear,errshear,None,None,None,**kwargs)
+    print "Combined"
+    samplerSM=runMCMC(priors,xshear,yshear,errshear,xmag,ymag,errmag,**kwargs)
+    
+    flatchainM=samplerM.flatchain
+    flatlnprobM=samplerM.flatlnprobability
+    flatchainS=samplerS.flatchain
+    flatlnprobS=samplerS.flatlnprobability
+    flatchainSM=samplerSM.flatchain
+    flatlnprobSM=samplerSM.flatlnprobability
+    
+    goodM=(flatlnprobM > -np.Inf)
+    goodS=(flatlnprobS > -np.Inf)
+    goodSM=(flatlnprobSM > -np.Inf)
+
+    chains=[flatchainM[goodM], flatchainS[goodS], flatchainSM[goodSM]]
+    lnprobs=[flatlnprobM[goodM],flatlnprobS[goodS],flatlnprobSM[goodSM]]
+    return (chains,lnprobs)
+
 ####
 # Chain statistics
 ####
