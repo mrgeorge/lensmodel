@@ -158,7 +158,7 @@ def sigmaToDeltaSigma(Rkpc, sigma):
     logInterp=scipy.interpolate.UnivariateSpline(np.log10(Rkpc),np.log10(sigma),s=0) # cubic spline interpolation on log axes. Allows extrapolation.
     integrand=lambda R: R*10.**logInterp(np.log10(R)) # convert linear coords for logInterp
     minRkpc=np.min([1.e-3,0.1*np.min(Rkpc)]) # minimum radius for integration
-    sigmaInt=np.array([(2./RR**2) * scipy.integrate.quad(integrand,minRkpc,RR)[0] for RR in Rkpc]) * 1.e3
+    sigmaInt=np.array([(2./RR**2) * scipy.integrate.quad(integrand,minRkpc,RR)[0] for RR in Rkpc])
     ds=sigmaInt-sigma
     return ds
 
