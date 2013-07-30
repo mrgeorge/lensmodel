@@ -247,7 +247,7 @@ int pymain(int MACin, int BARin, double cin, double fbin, double rbin, double nu
   n=nrad;
 
   if(BAR < 1 || BAR > 2) { fprintf(stderr, ": baryon distribution must be 1 or 2\n"); return 1; }
-  if((MAC!=2) && (nu!=1.)) { fprintf(stderr, ": Must set MAC==2 for nu!=1\n"); return 1; }
+  if((MAC!=2) && (nu!=1.)) { nu=1.; } // silently set nu=1 if we're not in Dutton mode
 
   /* Set up initial radial grid */
   for(i=0; i<n3; i++) {
