@@ -101,7 +101,7 @@ def testPriors():
 ####
 # Evaluate Likelihood
 ####
-def lnProb(pars, priorFuncs, fixed, xshear, yshear, errshear, xmag, ymag, errmag, redshift, cenType, delta, odType):
+def lnProb(pars, priors, xshear, yshear, errshear, xmag, ymag, errmag, redshift, cenType, delta, odType):
     """Return ln(P(model|data)) = -0.5*chisq to evaluate likelihood surface.
 
     Take model parameters, priors, and data and compute chisq=sum[((model-data)/error)**2].
@@ -120,6 +120,8 @@ def lnProb(pars, priorFuncs, fixed, xshear, yshear, errshear, xmag, ymag, errmag
     Returns:
         lnP - a float (this is what emcee needs)
     """
+
+    priorFuncs,fixed,guess,guessScale = interpretPriors(priors)
 
     # First evaluate the prior to see if this set of pars should be ignored
     chisq_prior=0.
@@ -167,7 +169,7 @@ def lnProb(pars, priorFuncs, fixed, xshear, yshear, errshear, xmag, ymag, errmag
 ####
 # MCMC
 ####
-def runMCMC(priors, xshear, yshear, errshear, xmag, ymag, errmag,redshift=0.,cenType="hernquist",delta=200.,odType="critical",nWalkers=2000,nBurn=50,nSteps=250,seed=None):
+def runMCMC(priors, xshear, yshear, errshear, xmag, ymag, errmag,redshift=0.,cenType="hernquist",delta=200.,odType="critical",nWalkers=2000,nBurn=50,nSteps=250,nThreads=1,seed=None):
     """Call emcee and return sampler.
 
     See interpretPriors for format of priors array.
@@ -180,7 +182,7 @@ def runMCMC(priors, xshear, yshear, errshear, xmag, ymag, errmag,redshift=0.,cen
     # RUN MCMC
     np.random.seed(seed)
     walkerStart=np.array([np.random.randn(nWalkers)*guessScale[ii]+guess[ii] for ii in xrange(nPars)]).T
-    sampler=emcee.EnsembleSampler(nWalkers,nPars,lnProb,args=[priorFuncs, fixed, xshear, yshear, errshear, xmag, ymag, errmag, redshift, cenType, delta, odType])
+    sampler=emcee.EnsembleSampler(nWalkers,nPars,lnProb,args=[priors, xshear, yshear, errshear, xmag, ymag, errmag, redshift, cenType, delta, odType],threads=nThreads)
     print "emcee burnin"
     pos, prob, state = sampler.run_mcmc(walkerStart,nBurn)
     sampler.reset()
