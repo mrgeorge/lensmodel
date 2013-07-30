@@ -324,7 +324,10 @@ def sigmaGNFW(Rkpc, mass, conc, beta, od):
 
 def gnfwF2(xx, beta):
     """Compute integral used to define sigmaGNFW in Eq. 8 of Wyithe, Turner, & Spergel 2001."""
-    ff,abserr=scipy.integrate.quad(gnfwF2Integrand,0,np.pi/2.,args=(xx,beta))
+    if(isinstance(xx,collections.Iterable)):
+        ff=np.array([scipy.integrate.quad(gnfwF2Integrand,0,np.pi/2.,args=(xxi,beta))[0] for xxi in xx])
+    else:
+        ff,abserr=scipy.integrate.quad(gnfwF2Integrand,0,np.pi/2.,args=(xx,beta))
     return ff
 
 def gnfwF2Integrand(theta, xx, beta):
