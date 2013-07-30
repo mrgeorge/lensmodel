@@ -352,6 +352,7 @@ def sigmaHernquist(Rkpc, mass, rhern):
     """
     ss=Rkpc/rhern
     sigma=mass/(2.*np.pi*(1.e3*rhern)**2*(1.-ss**2)**2) * ((2.+ss**2)*hernX(ss) - 3.)
+    return sigma
 
 def hernX(ss):
     """Return X(s) from Hernquist 1990 Eqs. 33 and 34.
@@ -360,7 +361,7 @@ def hernX(ss):
     low=((ss >= 0) & (ss <= 1))
     high=(ss>1)
     if(isinstance(ss,collections.Iterable)):
-        XX=np.zero_like(ss)
+        XX=np.zeros_like(ss)
         XX[low]=1./np.sqrt(1.-ss[low]**2) * np.log((1.+np.sqrt(1.-ss[low]**2))/ss[low])
         XX[high]=1./np.sqrt(ss[high]**2-1.) * np.arccos(1./ss[high])
     else: # ss is a scalar
