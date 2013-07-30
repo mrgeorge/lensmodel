@@ -16,7 +16,7 @@ cosmo=esutil.cosmology.Cosmo(h=0.7,omega_m=0.3,omega_l=0.7)
 ####
 # Top Level (generic) Density and Mass Profiles
 ####
-def rho(pars, rkpc, redshift=0., cenType="hernquist", delta=200., odType="critical"):
+def rho(pars, rkpc, redshift=0.1, cenType="hernquist", delta=200., odType="critical"):
 
     # Unpack model parameters
     logMstars, logRstars, logMhalo, conc, innerSlopeGNFW, nuDutton, AGnedin, wGnedin = pars
@@ -57,7 +57,7 @@ def rho(pars, rkpc, redshift=0., cenType="hernquist", delta=200., odType="critic
 
     return rhoTot
 
-def sigma(pars, Rkpc, redshift=0., cenType="hernquist", delta=200., odType="critical"):
+def sigma(pars, Rkpc, redshift=0.1, cenType="hernquist", delta=200., odType="critical"):
 
     # Unpack model parameters
     logMstars, logRstars, logMhalo, conc, innerSlopeGNFW, nuDutton, AGnedin, wGnedin = pars
@@ -99,7 +99,7 @@ def sigma(pars, Rkpc, redshift=0., cenType="hernquist", delta=200., odType="crit
     return sigTot
 
 
-def deltaSigma(pars, Rkpc, redshift=0., cenType="hernquist", delta=200., odType="critical"):
+def deltaSigma(pars, Rkpc, redshift=0.1, cenType="hernquist", delta=200., odType="critical"):
 
     # Unpack model parameters
     logMstars, logRstars, logMhalo, conc, innerSlopeGNFW, nuDutton, AGnedin, wGnedin = pars
@@ -148,7 +148,7 @@ def rhoToSigma(rkpc, rho):
     """Return surface mass density profile by interpolating and integrating rho."""
     logInterp=scipy.interpolate.UnivariateSpline(np.log10(rkpc),np.log10(rho),s=0) # cubic spline interpolation on log axes. Allows extrapolation.
     integrand=lambda theta,r: (r/np.cos(theta)**2) * 10.**logInterp(np.log10(r/np.cos(theta))) # convert linear coords for logInterp
-    sigma=2.*np.array([scipy.integrate.quad(integrand,0,np.pi/2.,args=(rr))[0] for rr in rkpc])
+    sigma=2.*np.array([scipy.integrate.quad(integrand,0,np.pi/2.,args=(rr))[0] for rr in rkpc]) * 1.e3
     return sigma
 
 def sigmaToDeltaSigma(Rkpc, sigma):
@@ -158,7 +158,7 @@ def sigmaToDeltaSigma(Rkpc, sigma):
     logInterp=scipy.interpolate.UnivariateSpline(np.log10(Rkpc),np.log10(sigma),s=0) # cubic spline interpolation on log axes. Allows extrapolation.
     integrand=lambda R: R*10.**logInterp(np.log10(R)) # convert linear coords for logInterp
     minRkpc=np.min([1.e-3,0.1*np.min(Rkpc)]) # minimum radius for integration
-    sigmaInt=np.array([(2./RR**2) * scipy.integrate.quad(integrand,minRkpc,RR)[0] for RR in Rkpc])
+    sigmaInt=np.array([(2./RR**2) * scipy.integrate.quad(integrand,minRkpc,RR)[0] for RR in Rkpc]) * 1.e3
     ds=sigmaInt-sigma
     return ds
 
@@ -171,18 +171,18 @@ def hubble(redshift):
     return Hz
 
 def rhoCritical(redshift):
-    """Return rhoCrit = 3H(z)**2 / [8*Pi*G] in Msun/kpc**3."""
+    """Return rhoCrit = 3H(z)**2 / [8*Pi*G] in Msun/pc**3."""
     gravConst=4.302e-9 # (km/s)**2 Mpc / Msun
-    rhoCrit=3.*hubble(redshift)**2 / (8.*np.pi*gravConst) * 1.e-9 # Msun / kpc**3
+    rhoCrit=3.*hubble(redshift)**2 / (8.*np.pi*gravConst) * 1.e-18 # Msun / pc**3
     return rhoCrit
 
 def rhoMatter(redshift):
-    """Return rhoM = Omega_m(z)*rho_crit(z) in Msun/kpc**3."""
+    """Return rhoM = Omega_m(z)*rho_crit(z) in Msun/pc**3."""
     rhoM=rhoCritical(redshift)*cosmo.omega_m()*(1.+redshift)**3
     return rhoM
 
 def overdensity(redshift, delta=200., type="critical"):
-    """Return overdensity of given type in Msun/kpc**3."""
+    """Return overdensity of given type in Msun/pc**3."""
     if(delta=="vir"):
         # Bryan & Norman 1998, as written in footnote 5 of Behroozi 2010
         xx=1./(1.+cosmo.omega_l()/(cosmo.omega_m()*(1.+redshift)**3)) - 1.
@@ -197,13 +197,13 @@ def overdensity(redshift, delta=200., type="critical"):
     return od
 
 def haloMass(rhalo, od):
-    """Return halo mass = (4/3) pi rhalo**3 * overdensity using units given."""
-    mhalo=(4./3)*np.pi*rhalo**3 * od
+    """Return halo mass = (4/3) pi rhalo**3 * overdensity in Msun [rhalo in kpc, od in Msun/pc**3]."""
+    mhalo=(4./3)*np.pi*rhalo**3 * (od*1.e9)
     return mhalo
 
 def haloRadius(mhalo, od):
-    """Return halo radius = [(3/4pi) mhalo/overdensity]**(1/3) using units given."""
-    rhalo=((3./(4.*np.pi)) * mhalo / od)**(1./3.)
+    """Return halo radius = [(3/4pi) mhalo/overdensity]**(1/3) in kpc [mhalo in Msun, od in Msun/pc**3]."""
+    rhalo=((3./(4.*np.pi)) * mhalo / (od*1.e9))**(1./3.)
     return rhalo
 
 def scaleRadius(rhalo, conc):
@@ -215,7 +215,7 @@ def scaleRadius(rhalo, conc):
 ####
 
 def rhoNFW(rkpc, mass, conc, od):
-    """Return density of NFW profile at rkpc in Msun/kpc**3.
+    """Return density of NFW profile at rkpc in Msun/pc**3.
     Follows Wright & Brainerd 2000 Eqs. 1-2
     """
     xx=rkpc/scaleRadius(haloRadius(mass, od), conc)
@@ -224,80 +224,80 @@ def rhoNFW(rkpc, mass, conc, od):
     return rho
 
 def sigmaNFW(Rkpc, mass, conc, od):
-    """Return surface mass density of NFW profile at Rkpc in Msun/kpc**2.
+    """Return surface mass density of NFW profile at Rkpc in Msun/pc**2.
     Follows Wright & Brainerd 2000 Eq. 11
     Rkpc can be scalar or iterable
     """
-    rs=scaleRadius(haloRadius(mass, od), conc)
+    rs=scaleRadius(haloRadius(mass, od), conc) # kpc
     xx=Rkpc/rs
     low=(xx<1)
     mid=(xx==1)
     high=(xx>1)
 
-    deltaC=(od/3.) * (conc**3)/(np.log(1.+conc) - conc/(1.+conc))
+    deltaC=(od/3.) * (conc**3)/(np.log(1.+conc) - conc/(1.+conc)) # Msun/pc**3
 
     if(isinstance(xx,collections.Iterable)):
         sigma=np.zeros_like(xx)
-        sigma[low]=2.*rs*deltaC/(xx[low]**2-1.) * (1. - 2./np.sqrt(1.-xx[low]**2) * np.arctanh(np.sqrt((1.-xx[low])/(1.+xx[low]))))
-        sigma[mid]=2.*rs*deltaC/3.
-        sigma[high]=2.*rs*deltaC/(xx[high]**2-1.) * (1. - 2./np.sqrt(xx[high]**2-1.) * np.arctan(np.sqrt((xx[high]-1.)/(1.+xx[high]))))
+        sigma[low]=2.*(rs*1.e3)*deltaC/(xx[low]**2-1.) * (1. - 2./np.sqrt(1.-xx[low]**2) * np.arctanh(np.sqrt((1.-xx[low])/(1.+xx[low]))))
+        sigma[mid]=2.*(rs*1.e3)*deltaC/3.
+        sigma[high]=2.*(rs*1.e3)*deltaC/(xx[high]**2-1.) * (1. - 2./np.sqrt(xx[high]**2-1.) * np.arctan(np.sqrt((xx[high]-1.)/(1.+xx[high]))))
     else: # Rkpc is a scalar
         if(low):
-            sigma=2.*rs*deltaC/(xx**2-1.) * (1. - 2./np.sqrt(1.-xx**2) * np.arctanh(np.sqrt((1.-xx)/(1.+xx))))
+            sigma=2.*(rs*1.e3)*deltaC/(xx**2-1.) * (1. - 2./np.sqrt(1.-xx**2) * np.arctanh(np.sqrt((1.-xx)/(1.+xx))))
         elif(mid):
-            sigma=2.*rs*deltaC/3.
+            sigma=2.*(rs*1.e3)*deltaC/3.
         elif(high):
-            sigma=2.*rs*deltaC/(xx**2-1.) * (1. - 2./np.sqrt(xx**2-1.) * np.arctan(np.sqrt((xx-1.)/(1.+xx))))
+            sigma=2.*(rs*1.e3)*deltaC/(xx**2-1.) * (1. - 2./np.sqrt(xx**2-1.) * np.arctan(np.sqrt((xx-1.)/(1.+xx))))
         else:
             raise ValueError(xx)
     return sigma
 
 def sigmaInteriorNFW(Rkpc, mass, conc, od):
-    """Return mean surface mass density of NFW profile inside Rkpc in Msun/kpc**2.
+    """Return mean surface mass density of NFW profile inside Rkpc in Msun/pc**2.
     Follows Wright & Brainerd 2000 Eq. 13
     Rkpc can be scalar or iterable
     """
-    rs=scaleRadius(haloRadius(mass, od), conc)
+    rs=scaleRadius(haloRadius(mass, od), conc) # kpc
     xx=Rkpc/rs
     low=(xx<1)
     mid=(xx==1)
     high=(xx>1)
 
-    deltaC=(od/3.) * (conc**3)/(np.log(1.+conc) - conc/(1.+conc))
+    deltaC=(od/3.) * (conc**3)/(np.log(1.+conc) - conc/(1.+conc)) # Msun/pc**3
 
     if(isinstance(xx,collections.Iterable)):
         sigmaInt=np.zeros_like(xx)
-        sigmaInt[low]=(4./xx[low]**2)*rs*deltaC * (2./np.sqrt(1.-xx[low]**2) * np.arctanh(np.sqrt((1.-xx[low])/(1.+xx[low]))) + np.log(xx[low]/2.))
-        sigmaInt[mid]=4.*rs*deltaC * (1. + np.log(1./2.))
-        sigmaInt[high]=(4./xx[high]**2)*rs*deltaC * (2./np.sqrt(xx[high]**2-1.) * np.arctan(np.sqrt((xx[high]-1.)/(1.+xx[high]))) + np.log(xx[high]/2.))
+        sigmaInt[low]=(4./xx[low]**2)*(rs*1.e3)*deltaC * (2./np.sqrt(1.-xx[low]**2) * np.arctanh(np.sqrt((1.-xx[low])/(1.+xx[low]))) + np.log(xx[low]/2.))
+        sigmaInt[mid]=4.*(rs*1.e3)*deltaC * (1. + np.log(1./2.))
+        sigmaInt[high]=(4./xx[high]**2)*(rs*1.e3)*deltaC * (2./np.sqrt(xx[high]**2-1.) * np.arctan(np.sqrt((xx[high]-1.)/(1.+xx[high]))) + np.log(xx[high]/2.))
     else: # Rkpc is a scalar
         if(low):
-            sigmaInt=(4./xx**2)*rs*deltaC * (2./np.sqrt(1.-xx**2) * np.arctanh(np.sqrt((1.-xx)/(1.+xx))) + np.log(xx/2.))
+            sigmaInt=(4./xx**2)*(rs*1.e3)*deltaC * (2./np.sqrt(1.-xx**2) * np.arctanh(np.sqrt((1.-xx)/(1.+xx))) + np.log(xx/2.))
         elif(mid):
-            sigmaInt=4.*rs*deltaC * (1. + np.log(1./2.))
+            sigmaInt=4.*(rs*1.e3)*deltaC * (1. + np.log(1./2.))
         elif(high):
-            sigmaInt=(4./xx**2)*rs*deltaC * (2./np.sqrt(xx**2-1.) * np.arctan(np.sqrt((xx-1.)/(1.+xx))) + np.log(xx/2.))
+            sigmaInt=(4./xx**2)*(rs*1.e3)*deltaC * (2./np.sqrt(xx**2-1.) * np.arctan(np.sqrt((xx-1.)/(1.+xx))) + np.log(xx/2.))
         else:
             raise ValueError(xx)
     return sigmaInt
     
 def deltaSigmaNFW(Rkpc, mass, conc, od):
-    """Return DS for GNFW profile in Msun/kpc**2.
+    """Return DS for GNFW profile in Msun/pc**2.
     Follows Wright & Brainerd 2000
     """
     return sigmaInteriorNFW(Rkpc, mass, conc, od) - sigmaNFW(Rkpc, mass, conc, od)
 
 def rhoGNFW(rkpc, mass, conc, beta, od):
-    """Return density of Generalized NFW profile at rkpc in Msun/kpc**3.
+    """Return density of Generalized NFW profile at rkpc in Msun/pc**3.
     Follows Eq. 1 of Wyithe, Turner, & Spergel 2001
     Allows generic overdensity (WTS assumes 200c)
     """
-    rscale=scaleRadius(haloRadius(mass, od), conc)
+    rscale=scaleRadius(haloRadius(mass, od), conc) # kpc
     rho=od * rhoGNFW0(conc,beta) / ((rkpc/rscale)**beta * (1.+rkpc/rscale)**(3.-beta))
     return rho
 
 def rhoGNFW0(conc,beta):
-    """Return scale density of GNFW profile.
+    """Return dimensionless scale density of GNFW profile.
     Follows Eq. 4 of Wyithe, Turner, & Spergel 2001
     NOTE: Overdensity has been absorbed into rhoGNFW (Eq. 1), WTS assumes 200c
     """
@@ -314,12 +314,12 @@ def gnfwFIntegrand(xx, beta):
     return xx**(2.-beta) * (1.+xx)**(beta-3.)
 
 def sigmaGNFW(Rkpc, mass, conc, beta, od):
-    """Return surface mass density for GNFW profile in Msun/kpc**2.
+    """Return surface mass density for GNFW profile in Msun/pc**2.
     Follows Eq. 8 of Wyithe, Turner, & Spergel 2001
     """
-    Rscale=scaleRadius(haloRadius(mass, od), conc)
+    Rscale=scaleRadius(haloRadius(mass, od), conc) # kpc
     xx=Rkpc/Rscale
-    sigma=2. * od * rhoGNFW0(conc,beta) * Rscale * xx**(1.-beta) * gnfwF2(xx, beta)
+    sigma=2. * od * rhoGNFW0(conc,beta) * (Rscale*1.e3) * xx**(1.-beta) * gnfwF2(xx, beta)
     return sigma
 
 def gnfwF2(xx, beta):
@@ -332,26 +332,26 @@ def gnfwF2Integrand(theta, xx, beta):
     return np.sin(theta)*(np.sin(theta) + xx)**(beta-3.)
 
 def deltaSigmaGNFW(Rkpc, mass, conc, beta, od):
-    """Return DS for GNFW profile in Msun/kpc**2.
+    """Return DS for GNFW profile in Msun/pc**2.
     Simply calls sigmaToDeltaSigma, lacking an analytic profile.
     """
     return sigmaToDeltaSigma(Rkpc, sigmaGNFW(Rkpc, mass, conc, beta, od))
 
 def rhoHernquist(rkpc, mass, rhern):
-    """Return density profile for Hernquist model in Msun/kpc**3.
+    """Return density profile for Hernquist model in Msun/pc**3.
     rhern is the scale radius 'a' used in Eq. 2 of Hernquist 1990
     a=rhalf/(1.+sqrt(2)) where rhalf is the 3d half-mass radius
     """
-    rho=mass/(2.*np.pi) * (rhern/rkpc) * 1./(rkpc+rhern)**3
+    rho=mass/(2.*np.pi) * (rhern/rkpc) * 1./(1.e3*(rkpc+rhern))**3
     return rho
 
 def sigmaHernquist(Rkpc, mass, rhern):
-    """Return the surface mass density for Hernquist model in Msun/kpc**2.
+    """Return the surface mass density for Hernquist model in Msun/pc**2.
     Follows Eq. 32 of Hernquist 1990
     Assumes Upsilon=1 (i.e. consistently uses mass, not light)
     """
     ss=Rkpc/rhern
-    sigma=mass/(2.*np.pi*rhern**2*(1.-ss**2)**2) * ((2.+ss**2)*hernX(ss) - 3.)
+    sigma=mass/(2.*np.pi*(1.e3*rhern)**2*(1.-ss**2)**2) * ((2.+ss**2)*hernX(ss) - 3.)
 
 def hernX(ss):
     """Return X(s) from Hernquist 1990 Eqs. 33 and 34.
@@ -371,20 +371,20 @@ def hernX(ss):
     return XX
 
 def deltaSigmaHernquist(Rkpc, mass, rhern):
-    """Return DS for Hernquist profile in Msun/kpc**2.
+    """Return DS for Hernquist profile in Msun/pc**2.
     Simply calls sigmaToDeltaSigma, lacking an analytic profile.
     """
     return sigmaToDeltaSigma(Rkpc, sigmaHernquist(Rkpc, mass, rhern))
 
 def deltaSigmaPS(Rkpc, mass):
-    """Return DS for a point source in Msun/kpc**2."""
-    return mass/(np.pi*Rkpc**2)
+    """Return DS for a point source in Msun/pc**2."""
+    return mass/(np.pi*(1.e3*Rkpc)**2)
 
 ####
 # Wrappers to CONTRA for contracted profiles
 ####
 def rhoAC(rkpc, mhalo, conc, od, MAC, nuac, Aac, wac, mstars, rstars):
-    """Return contracted profile at rkpc in Msun/kpc**3.
+    """Return contracted profile at rkpc in Msun/pc**3.
     Calls Gnedin's CONTRA code and goes to NFW beyond rhalo.
     """
 
@@ -398,7 +398,7 @@ def rhoAC(rkpc, mhalo, conc, od, MAC, nuac, Aac, wac, mstars, rstars):
 
     # convert profile to physical units
     rcontra=acProfile[0]*rhalo # kpc
-    rhocontra=acProfile[1]*mhalo/rhalo**3 # Msun/kpc
+    rhocontra=acProfile[1]*mhalo/(1.e3*rhalo)**3 # Msun/pc**3
 
     # extend AC profile using NFW outside virial radius
     extFactor=10.
@@ -425,13 +425,13 @@ def appendRhoNFW(rkpc,rho,rhalo,conc,od,extFactor):
     return (rNew,rhoNew)
 
 def sigmaAC(Rkpc, mhalo, conc, od, MAC, nuDutton, AGnedin, wGnedin, mstars, rstars):
-    """Return surface mass density for contracted profile in Msun/kpc**2.
+    """Return surface mass density for contracted profile in Msun/pc**2.
     Simply calls rhoToSigma, lacking an analytic profile.
     """
     return rhoToSigma(Rkpc, rhoAC(Rkpc, mhalo, conc, od, MAC, nuDutton, AGnedin, wGnedin, mstars, rstars))
 
 def deltaSigmaAC(Rkpc, mhalo, conc, od, MAC, nuDutton, AGnedin, wGnedin, mstars, rstars):
-    """Return DS for contracted profile in Msun/kpc**2.
+    """Return DS for contracted profile in Msun/pc**2.
     Simply calls sigmaToDeltaSigma, lacking an analytic profile.
     """
     return sigmaToDeltaSigma(Rkpc, sigmaAC(Rkpc, mhalo, conc, od, MAC, nuDutton, AGnedin, wGnedin, mstars, rstars))
