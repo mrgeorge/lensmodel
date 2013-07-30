@@ -3,6 +3,7 @@
 import numpy as np
 import emcee
 import profiles
+import scipy.stats
 
 def simData():
     """Generate fake lensing profiles with some S/N."""
