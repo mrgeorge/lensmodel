@@ -191,3 +191,45 @@ def runMCMC(priors, xshear, yshear, errshear, xmag, ymag, errmag,redshift=0.,cen
     sampler.run_mcmc(pos, nSteps)
 
     return sampler
+
+####
+# Chain statistics
+####
+def getMaxProb(chain,lnprob):
+    maxP=(lnprob == np.max(lnprob)).nonzero()[0][0]
+    return chain[maxP]
+
+def getPeakKDE(chain,guess):
+    if(len(chain.shape)==1):
+        nPars=1
+        kern=scipy.stats.gaussian_kde(chain)
+        peakKDE=scipy.optimize.fmin(lambda x: -kern(x), guess,disp=False)
+        return peakKDE
+    else:
+        nPars=chain.shape[1]
+        peakKDE=np.zeros(nPars)
+        for ii in range(nPars):
+            kern=scipy.stats.gaussian_kde(chain[:,ii])
+            peakKDE[ii]=scipy.optimize.fmin(lambda x: -kern(x), guess[ii],disp=False)
+        return peakKDE
+
+def getMedPost(chain):
+# this is not a good estimator when posteriors are flat
+    return np.median(chain,axis=0)
+
+def get68(chain,opt="hw"):
+# get half-width of 68% confidence range
+# for a gaussian distribution, this is 1-sigma
+    nSteps=len(chain)
+    chainSort=np.sort(chain,axis=0)
+    low68=chainSort[0.16*nSteps]
+    high68=chainSort[0.84*nSteps]
+    hw68=0.5*(high68-low68)
+    if(opt=="hw"):
+        return hw68
+    elif(opt=="low"):
+        return low68
+    elif(opt=="high"):
+        return high68
+    elif(opt=="lowhigh"):
+        return (low68,high68)
