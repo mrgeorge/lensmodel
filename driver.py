@@ -13,43 +13,71 @@ x1,y1,e1=lensmodel.io.readData(inFile)
 redshift=0.1
 xshear,yshear,errshear=lensmodel.io.convertCosmo(x1,y1,e1,redshift=redshift)
 
-# Use only bins at R<1Mpc
-fitSel=(xshear < 1000.)
+shearSN_sdss=np.median(yshear/errshear)
 
+n_sdss=1.2 # N sources / sq. arcmin
+n_des=12.
+n_lsst=37.
+
+A_sdss=0.9243 # Survey area in 10**4 deg**2
+A_des=0.5
+A_lsst=1.8
+
+shearSN_des=shearSN_sdss * np.sqrt(n_des/n_sdss * A_des/A_sdss)
+shearSN_lsst=shearSN_sdss * np.sqrt(n_lsst/n_sdss * A_lsst/A_sdss)
 
 # Input model pars
-logMstars=11.2
-logRstars=1.
-logMhalo=13.5
+logMstars=11.
+logRstars=0.5
+logMhalo=12.0
 conc=5.
 innerSlopeGNFW=1.
 nuDutton=0.
 AGnedin=-1.
 wGnedin=-1.
 inputPars=[logMstars, logRstars, logMhalo, conc, innerSlopeGNFW, nuDutton, AGnedin, wGnedin]
+allLabels=np.array(["log(SM)","log(Reff)","log(Mh)","conc","inner slope","nuDutton","AGnedin","wGnedin"])
 cenType="hernquist"
 odType="critical"
 delta=200.
 
-#priors=[logMstars,logRstars,(logMhalo,1.),[2.,10.],innerSlopeGNFW,[-0.3,1.2],-1.,-1.]
-priors=[logMstars,logRstars,[12.,14.],[2.,10.],[0.,1.5],[-0.5,1.2],-1.,-1.]
-freePars=inputPars[2:6]
-labels=np.array(["log(Mh)","conc","inner slope","nuDutton"])
+priors=[(logMstars,0.3,8,13),logRstars,[11.5,12.5],[2.,10.],[0.5,1.5],0,-1.,-1.]
+ind=[0,2,3,4]
+freePars=[inputPars[ii] for ii in ind]
+labels=allLabels[ind]
 
+
+# Now redo the radial binning with similar scale as sdss
+Rmin=40. # kpc
+Rmax=1000. # kpc - Use only bins at R<1Mpc
+dlog10R=np.median(np.log10(xshear[1:]/xshear[:-1]))
+nBins=np.log10(Rmax/Rmin)/dlog10R+1
+xshear=np.logspace(np.log10(Rmin),np.log10(Rmax),num=nBins)
+
+# Evaluate the model at these points - this will be the data vector
 yshear=lensmodel.profiles.deltaSigma(inputPars,xshear)
+
+# Scale error bars
+shearSN=shearSN_sdss
+errshear=yshear * shearSN
+
+# Get magnification signal
+magSN=0.5*shearSN # assume shear and mag have same radial dependence
 xmag=xshear
 ymag=lensmodel.profiles.sigma(inputPars,xmag)
-errmag=1.*errshear*(ymag/yshear) # say S/N (mag) = S/N (shear) at all radii
+errmag=ymag * magSN
 
 # Run chains
 nWalkers=2000
+#nWalkers=100
 nBurn=50
 nSteps=250
-nThreads=8
+nThreads=48
+#nThreads=8
 seed=None
 
 chains,lnprobs=lensmodel.fit.fitObs(priors,xshear,yshear,errshear,xmag,ymag,errmag,redshift=redshift,cenType=cenType,delta=delta,odType=odType,nWalkers=nWalkers,nBurn=nBurn,nSteps=nSteps,nThreads=nThreads,seed=seed)
 
 smooth=3
-lensmodel.plot.contourPlotAll(chains,lnprobs=lnprobs,inputPars=freePars,smooth=smooth,labels=labels,showPlot=False,filename=plotDir+"contours.pdf")
+lensmodel.plot.contourPlotAll(chains,lnprobs=lnprobs,inputPars=freePars,smooth=smooth,labels=labels,showPlot=False,filename=plotDir+"contours_4par_sdss_30.pdf")
 
