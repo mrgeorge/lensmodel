@@ -11,7 +11,7 @@ dataDir="../data/"
 inFile=dataDir+"rebin.matt.10x.zebracut.src.sm_11_11.5.big.out"
 x1,y1,e1=lensmodel.io.readData(inFile)
 redshift=0.1
-xshear,yshear,errshear=lensmodel.io.convertCosmo(x1,y1,e1,redshift=redshift)
+xshear_sdss,yshear_sdss,errshear_sdss=lensmodel.io.convertCosmo(x1,y1,e1,redshift=redshift)
 
 shearSN_sdss=np.median(yshear/errshear)
 
@@ -48,24 +48,24 @@ labels=allLabels[ind]
 
 
 # Now redo the radial binning with similar scale as sdss
-Rmin=40. # kpc
+Rmin=20. # kpc - note this is the geometric bin center, so measurements would need to go to radii 0.5*bin width smaller
 Rmax=1000. # kpc - Use only bins at R<1Mpc
-dlog10R=np.median(np.log10(xshear[1:]/xshear[:-1]))
-nBins=np.log10(Rmax/Rmin)/dlog10R+1
-xshear=np.logspace(np.log10(Rmin),np.log10(Rmax),num=nBins)
+dlog10R=np.median(np.log10(xshear_sdss[1:]/xshear_sdss[:-1])) # log bin spacing
+nBins=np.floor(np.log10(Rmax/Rmin)/dlog10R)+1
+xshear=Rmin*10.**(np.arange(nBins) * dlog10R)
 
 # Evaluate the model at these points - this will be the data vector
 yshear=lensmodel.profiles.deltaSigma(inputPars,xshear)
 
 # Scale error bars
-shearSN=shearSN_sdss
-errshear=yshear * shearSN
+shearSN=shearSN_lsst
+errshear=yshear / shearSN
 
 # Get magnification signal
 magSN=0.5*shearSN # assume shear and mag have same radial dependence
 xmag=xshear
 ymag=lensmodel.profiles.sigma(inputPars,xmag)
-errmag=ymag * magSN
+errmag=ymag / magSN
 
 # Run chains
 nWalkers=2000
@@ -79,5 +79,5 @@ seed=None
 chains,lnprobs=lensmodel.fit.fitObs(priors,xshear,yshear,errshear,xmag,ymag,errmag,redshift=redshift,cenType=cenType,delta=delta,odType=odType,nWalkers=nWalkers,nBurn=nBurn,nSteps=nSteps,nThreads=nThreads,seed=seed)
 
 smooth=3
-lensmodel.plot.contourPlotAll(chains,lnprobs=lnprobs,inputPars=freePars,smooth=smooth,labels=labels,showPlot=False,filename=plotDir+"contours_4par_sdss_30.pdf")
+lensmodel.plot.contourPlotAll(chains,lnprobs=lnprobs,inputPars=freePars,smooth=smooth,labels=labels,showPlot=False,filename=plotDir+"contours_4par_lsst_20.pdf")
 
