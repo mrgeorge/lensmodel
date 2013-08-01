@@ -2,7 +2,7 @@ This is a modified version of Gnedin's CONTRA code for calculating halo contract
 
 I've used SWIG to allow python to interact with the C code as a module. If the C code is updated, use the following commands to re-compile:
 
-/* On macbeth (OSX) */
+/* On macbeth (OSX)  - this needs to be updated to link GSL */
 swig -python contra.i
 cc -c `python-config --cflags` contra.c contra_wrap.c
 cc -bundle `python-config --ldflags` contra.o contra_wrap.o -o _contra.so
@@ -12,11 +12,11 @@ cc -bundle `python-config --ldflags` contra.o contra_wrap.o -o _contra.so
           so I installed the same version as on macbeth (1.3.40) which is still outdated.
           So have to specify full path to swig when calling it.
           Also had to add python lib dir to C_INCLUDE_PATH in .bashrc.
+   Note2 - added -lm -lgsl -lgslcblas to link GSL lib for GNFW integral
 */
 /home/mgeorge/bin/swig -python contra.i
 cc -fpic -c contra.c contra_wrap.c
-ld -shared contra.o contra_wrap.o -o _contra.so
-
+ld -lm -lgsl -lgslcblas -shared contra.o contra_wrap.o -o _contra.so
 
 
 May need to update contra.i with new function headers, etc. from contra.c
