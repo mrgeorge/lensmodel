@@ -2,7 +2,7 @@
 %{
 // Headers from contra.c
 #define nmax 1001
-int pymain(int MACin, int BARin, double cin, double fbin, double rbin, double nuin, double Ain, double win, int nrad, double rfout[nmax], double rhofout[nmax]);
+int pymain(int MACin, int BARin, double cin, double fbin, double rbin, double innerSlopein, double nuin, double Ain, double win, int nrad, double rfout[nmax], double rhofout[nmax]);
 %}
 
 // The arg list for pymain in contra has arrays meant to be filled as return values
@@ -39,7 +39,7 @@ int pymain(int MACin, int BARin, double cin, double fbin, double rbin, double nu
     }
     $result = o;
 }
-int pymain(int MACin, int BARin, double cin, double fbin, double rbin, double nuin, double Ain, double win, int nrad, double rfout[nmax], double rhofout[nmax]);
+int pymain(int MACin, int BARin, double cin, double fbin, double rbin, double innerSlopein, double nuin, double Ain, double win, int nrad, double rfout[nmax], double rhofout[nmax]);
 
 %pythoncode{
   def cleanOutput(out,nrad):
@@ -47,7 +47,7 @@ int pymain(int MACin, int BARin, double cin, double fbin, double rbin, double nu
      arr=np.array(out)
      return arr.reshape((2,len(arr)/2))[:,:nrad]
 
-  def contra(MAC, BAR, conc, fb, rb, nu, A, w, nrad):
-     out=pymain(MAC,BAR,conc,fb,rb,nu,A,w,nrad)
+  def contra(MAC, BAR, conc, fb, rb, isl, nu, A, w, nrad):
+     out=pymain(MAC,BAR,conc,fb,rb,isl,nu,A,w,nrad)
      return cleanOutput(out,nrad)
 }
