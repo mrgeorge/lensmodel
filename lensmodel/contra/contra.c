@@ -22,6 +22,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <string.h> // for memset
+#include <gsl/gsl_integration.h> // for gnfw
 
 #define sqr(x)  ((x)*(x))
 
@@ -29,7 +30,7 @@
 #define pi   3.14159265358979323846
 
 int BAR, MAC, n=81, n3=101;   //n=81 n3=101
-double c, fb, rb, nu=1., A=0.85, w=0.8, r0=0.03;
+double c, fb, rb, innerSlope=1., nu=1., A=0.85, w=0.8, r0=0.03;
 double ri[nmax], rf[nmax], mhi[nmax], mhf[nmax],
   rhohi[nmax], rhohf[nmax], mhi_av[nmax], g[nmax],
   logri[nmax], logrf[nmax],
@@ -176,12 +177,47 @@ double rtsafe(void (*funcd)(double, double *, double *, double, double), double 
 /* END CODE FROM SPLINE.C */
 
 
+double gnfwIntegrand(double yy, void *params)
+{
+  return pow(yy,2.-innerSlope) * pow(1.+yy,innerSlope-3.);
+}
+
+double gnfwMass(double x, double c)
+{
+  size_t limitI=1000;
+  double epsabs=1.0e-8;
+  double epsrel=1.0e-5;  //adjust later.
+
+  gsl_integration_workspace * workspace = gsl_integration_workspace_alloc(limitI);
+
+  gsl_function F;
+  F.function = &gnfwIntegrand;
+  F.params = NULL;
+
+  int numStatus, denomStatus;
+  double num, numerr, denom, denomerr;
+  numStatus = gsl_integration_qag(&F, 0, c*x, epsabs, epsrel, limitI, GSL_INTEG_GAUSS31, workspace, &num, &numerr);
+  denomStatus = gsl_integration_qag(&F, 0, c, epsabs, epsrel, limitI, GSL_INTEG_GAUSS31, workspace, &denom, &denomerr);
+
+  gsl_integration_workspace_free(workspace);
+
+  return num/denom;
+}
+
+
 double mdm( double x, double c )    /* initial dark matter mass distribution */
+// Returns the enclosed mass M(<x) where x=r/rvir in units of the dark halo mass
 {
   double f=0.0;
   
   /* Navarro, Frenk & White (1997) model */
-  f = (1.-fb)*(log(1.+c*x) - c*x/(1.+c*x))/(log(1.+c) - c/(1.+c));
+  if(innerSlope==1.) {
+    f = (1.-fb)*(log(1.+c*x) - c*x/(1.+c*x))/(log(1.+c) - c/(1.+c));
+  }
+  /* GNFW - Wyithe, Turner, & Spergel (2001) model */
+  else {
+    f = (1.-fb)*gnfwMass(x,c);
+  }
   return( f );
 }
 
@@ -226,7 +262,7 @@ void funcd( double r, double *f, double *df, double mhi, double g )
 }
 
 
-int pymain(int MACin, int BARin, double cin, double fbin, double rbin, double nuin, double Ain, double win, int nrad, double rfout[nmax], double rhofout[nmax])
+int pymain(int MACin, int BARin, double cin, double fbin, double rbin, double innerSlopein, double nuin, double Ain, double win, int nrad, double rfout[nmax], double rhofout[nmax])
 {
   int i;
   double x, d, logmhf, dlogmhf, dlogmhi;
@@ -241,6 +277,7 @@ int pymain(int MACin, int BARin, double cin, double fbin, double rbin, double nu
   c=cin;
   fb=fbin;
   rb=rbin;
+  innerSlope=innerSlopein;
   nu=nuin;
   A=Ain;
   w=win;
