@@ -37,26 +37,42 @@ nBins=np.floor(np.log10(Rmax/Rmin)/dlog10R)+1
 Rkpc=Rmin*10.**(np.arange(nBins) * dlog10R)
 rkpc=Rkpc
 
-decimal=3 # almost_equal asserstions valid when difference is < 0.5 * 10**(-decimal)
+decimal=2 # almost_equal asserstions valid when abs(desired-actual) < 0.5 * 10**(-decimal)
 
 def test_rho_nfw_vs_gnfw():
     rhoNFW=lensmodel.profiles.rhoNFW(rkpc, mhalo, conc, od)
     rhoGNFW=lensmodel.profiles.rhoGNFW(rkpc, mhalo, conc, 1., od)
-    np.testing.assert_array_almost_equal(rhoNFW,rhoGNFW,decimal=decimal,err_msg="rhoNFW != rhoGNFW(beta=1)")
+    np.testing.assert_array_almost_equal((rhoGNFW-rhoNFW)/rhoNFW,np.zeros(len(rkpc)),decimal=decimal,err_msg="rhoNFW != rhoGNFW(beta=1)")
 def test_sigma_nfw_vs_gnfw():
-    sigmaNFW=lensmodel.profiles.sigmaNFW(rkpc, mhalo, conc, od)
-    sigmaGNFW=lensmodel.profiles.sigmaGNFW(rkpc, mhalo, conc, 1., od)
-    np.testing.assert_array_almost_equal(sigmaNFW,sigmaGNFW,decimal=decimal,err_msg="sigmaNFW != sigmaGNFW(beta=1)")
+    sigmaNFW=lensmodel.profiles.sigmaNFW(Rkpc, mhalo, conc, od)
+    sigmaGNFW=lensmodel.profiles.sigmaGNFW(Rkpc, mhalo, conc, 1., od)
+    np.testing.assert_array_almost_equal((sigmaGNFW-sigmaNFW)/sigmaNFW,np.zeros(len(Rkpc)),decimal=decimal,err_msg="sigmaNFW != sigmaGNFW(beta=1)")
 def test_deltaSigma_nfw_vs_gnfw():
-    deltaSigmaNFW=lensmodel.profiles.deltaSigmaNFW(rkpc, mhalo, conc, od)
-    deltaSigmaGNFW=lensmodel.profiles.deltaSigmaGNFW(rkpc, mhalo, conc, 1., od)
-    np.testing.assert_array_almost_equal(deltaSigmaNFW,deltaSigmaGNFW,decimal=decimal,err_msg="deltaSigmaNFW != deltaSigmaGNFW(beta=1)")
+    deltaSigmaNFW=lensmodel.profiles.deltaSigmaNFW(Rkpc, mhalo, conc, od)
+    deltaSigmaGNFW=lensmodel.profiles.deltaSigmaGNFW(Rkpc, mhalo, conc, 1., od)
+    np.testing.assert_array_almost_equal((deltaSigmaGNFW-deltaSigmaNFW)/deltaSigmaNFW,np.zeros(len(Rkpc)),decimal=decimal,err_msg="deltaSigmaNFW != deltaSigmaGNFW(beta=1)")
 
-def test_nfw_vs_contra():
-    pass
+def test_rho_nfw_vs_contra():
+    rhoNFW=lensmodel.profiles.rhoNFW(rkpc, mhalo, conc, od)
+    rhoAC=lensmodel.profiles.rhoAC(rkpc, mhalo, conc, od, 2, 1., 0., -1., -1., mstars, rstars)
+    np.testing.assert_array_almost_equal((rhoAC-rhoNFW)/rhoNFW,np.zeros(len(rkpc)),decimal=decimal,err_msg="rhoNFW != rhoAC(beta=1,nu=0)")
+def test_sigma_nfw_vs_contra():
+    sigmaNFW=lensmodel.profiles.sigmaNFW(Rkpc, mhalo, conc, od)
+    sigmaAC=lensmodel.profiles.sigmaAC(Rkpc, mhalo, conc, od, 2, 1., 0., -1., -1., mstars, rstars)
+    np.testing.assert_array_almost_equal((sigmaAC-sigmaNFW)/sigmaNFW,np.zeros(len(Rkpc)),decimal=decimal,err_msg="sigmaNFW != sigmaAC(beta=1,nu=0)")
+def test_deltaSigma_nfw_vs_contra():
+    deltaSigmaNFW=lensmodel.profiles.deltaSigmaNFW(Rkpc, mhalo, conc, od)
+    deltaSigmaAC=lensmodel.profiles.deltaSigmaAC(Rkpc, mhalo, conc, od, 2, 1., 0., -1., -1., mstars, rstars)
+    np.testing.assert_array_almost_equal((deltaSigmaAC-deltaSigmaNFW)/deltaSigmaNFW,np.zeros(len(Rkpc)),decimal=decimal,err_msg="deltaSigmaNFW != deltaSigmaAC(beta=1,nu=0)")
 
 def test_gnfw_vs_contra():
     pass
 
-def test_blum_vs_contra():
+def test_blum_vs_gnedin():
+    pass
+
+def test_blum_vs_dutton():
+    pass
+
+def test_gnedin_vs_dutton():
     pass
