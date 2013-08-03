@@ -12,6 +12,8 @@ cosmo=esutil.cosmology.Cosmo(h=0.7,omega_m=0.3,omega_l=0.7)
 # r for 3d, R for 2d
 # 200c for default overdensity
 
+Rkpcfine=np.logspace(0,3.5) # used for finer sampling when interpolating
+rkpcfine=Rkpcfine
 
 ####
 # Top Level (generic) Density and Mass Profiles
@@ -135,22 +137,35 @@ def deltaSigma(pars, Rkpc, redshift=0.1, cenType="hernquist", delta=200., odType
 ####
 # Profile conversions via integration
 ####
-def rhoToSigma(rkpc, rho):
-    """Return surface mass density profile by interpolating and integrating rho."""
-    logInterp=scipy.interpolate.UnivariateSpline(np.log10(rkpc),np.log10(rho),s=0) # cubic spline interpolation on log axes. Allows extrapolation.
+def rhoToSigma(rkpc_out, rkpc_in, rho):
+    """Return surface mass density profile by interpolating and integrating rho.
+    Inputs:
+        rkpc_out - radius in kpc for DS to be sampled on
+        rkpc_in - radius in kpc at which input rho is sampled
+        rho - mass density in Msun/pc**3, same length as rkpc_in
+    Returns:
+        sigma - surface mass density in Msun/pc**2, same length as rkpc_out
+    """
+    logInterp=scipy.interpolate.UnivariateSpline(np.log10(rkpc_in),np.log10(rho),s=0) # cubic spline interpolation on log axes. Allows extrapolation.
     integrand=lambda theta,r: (r/np.cos(theta)**2) * 10.**logInterp(np.log10(r/np.cos(theta))) # convert linear coords for logInterp
-    sigma=2.*np.array([scipy.integrate.quad(integrand,0,np.pi/2.,args=(rr))[0] for rr in rkpc]) * 1.e3
+    sigma=2.*np.array([scipy.integrate.quad(integrand,0,np.pi/2.,args=(rr))[0] for rr in rkpc_out]) * 1.e3
     return sigma
 
-def sigmaToDeltaSigma(Rkpc, sigma):
+def sigmaToDeltaSigma(Rkpc_out, Rkpc_in, sigma):
     """Return DS profile by interpolating and integrating sigma.
     Based on e.g. Wright & Brainerd 2000, Eq. 13 line 1
+    Inputs:
+        Rkpc_out - radius in kpc for DS to be sampled on
+        Rkpc_in - radius in kpc at which input sigma is sampled
+        sigma - surface mass density in Msun/pc**2, same length as Rkpc_in
+    Returns:
+        ds - delta sigma in Msun/pc**2, same length as Rkpc_out
     """
-    logInterp=scipy.interpolate.UnivariateSpline(np.log10(Rkpc),np.log10(sigma),s=0) # cubic spline interpolation on log axes. Allows extrapolation.
+    logInterp=scipy.interpolate.UnivariateSpline(np.log10(Rkpc_in),np.log10(sigma),s=0) # cubic spline interpolation on log axes. Allows extrapolation.
     integrand=lambda R: R*10.**logInterp(np.log10(R)) # convert linear coords for logInterp
-    minRkpc=np.min([1.e-3,0.1*np.min(Rkpc)]) # minimum radius for integration
-    sigmaInt=np.array([(2./RR**2) * scipy.integrate.quad(integrand,minRkpc,RR)[0] for RR in Rkpc])
-    ds=sigmaInt-sigma
+    minRkpc=np.min([1.e-3,0.1*np.min(Rkpc_out)]) # minimum radius for integration
+    sigmaInt=np.array([(2./RR**2) * scipy.integrate.quad(integrand,minRkpc,RR)[0] for RR in Rkpc_out])
+    ds=sigmaInt-10.**logInterp(np.log10(Rkpc_out))
     return ds
 
 ####
@@ -329,7 +344,7 @@ def deltaSigmaGNFW(Rkpc, mass, conc, beta, od):
     """Return DS for GNFW profile in Msun/pc**2.
     Simply calls sigmaToDeltaSigma, lacking an analytic profile.
     """
-    return sigmaToDeltaSigma(Rkpc, sigmaGNFW(Rkpc, mass, conc, beta, od))
+    return sigmaToDeltaSigma(Rkpc, Rkpcfine, sigmaGNFW(Rkpcfine, mass, conc, beta, od))
 
 def rhoHernquist(rkpc, mass, rhern):
     """Return density profile for Hernquist model in Msun/pc**3.
@@ -369,7 +384,7 @@ def deltaSigmaHernquist(Rkpc, mass, rhern):
     """Return DS for Hernquist profile in Msun/pc**2.
     Simply calls sigmaToDeltaSigma, lacking an analytic profile.
     """
-    return sigmaToDeltaSigma(Rkpc, sigmaHernquist(Rkpc, mass, rhern))
+    return sigmaToDeltaSigma(Rkpc, Rkpcfine, sigmaHernquist(Rkpcfine, mass, rhern))
 
 def deltaSigmaPS(Rkpc, mass):
     """Return DS for a point source in Msun/pc**2."""
@@ -423,13 +438,13 @@ def sigmaAC(Rkpc, mhalo, conc, od, MAC, innerSlopeGNFW, nuDutton, AGnedin, wGned
     """Return surface mass density for contracted profile in Msun/pc**2.
     Simply calls rhoToSigma, lacking an analytic profile.
     """
-    return rhoToSigma(Rkpc, rhoAC(Rkpc, mhalo, conc, od, MAC, innerSlopeGNFW, nuDutton, AGnedin, wGnedin, mstars, rstars))
+    return rhoToSigma(Rkpc, rkpcfine, rhoAC(rkpcfine, mhalo, conc, od, MAC, innerSlopeGNFW, nuDutton, AGnedin, wGnedin, mstars, rstars))
 
 def deltaSigmaAC(Rkpc, mhalo, conc, od, MAC, innerSlopeGNFW, nuDutton, AGnedin, wGnedin, mstars, rstars):
     """Return DS for contracted profile in Msun/pc**2.
     Simply calls sigmaToDeltaSigma, lacking an analytic profile.
     """
-    return sigmaToDeltaSigma(Rkpc, sigmaAC(Rkpc, mhalo, conc, od, MAC, innerSlopeGNFW, nuDutton, AGnedin, wGnedin, mstars, rstars))
+    return sigmaToDeltaSigma(Rkpc, Rkpcfine, sigmaAC(Rkpcfine, mhalo, conc, od, MAC, innerSlopeGNFW, nuDutton, AGnedin, wGnedin, mstars, rstars))
 
 
 ####
