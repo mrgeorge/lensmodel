@@ -13,7 +13,7 @@ x1,y1,e1=lensmodel.io.readData(inFile)
 redshift=0.1
 xshear_sdss,yshear_sdss,errshear_sdss=lensmodel.io.convertCosmo(x1,y1,e1,redshift=redshift)
 
-shearSN_sdss=np.median(yshear/errshear)
+shearSN_sdss=np.median(yshear_sdss/errshear_sdss)
 
 n_sdss=1.2 # N sources / sq. arcmin
 n_des=12.
@@ -41,14 +41,14 @@ cenType="hernquist"
 odType="critical"
 delta=200.
 
-priors=[(logMstars,0.3,8,13),logRstars,[11.5,12.5],[2.,10.],[0.5,1.5],0,-1.,-1.]
-ind=[0,2,3,4]
+priors=[(logMstars,0.3,8,13),logRstars,[11.5,12.5],[2.,10.],1.,[-0.2,1.0],-1.,-1.]
+ind=[0,2,3,5]
 freePars=[inputPars[ii] for ii in ind]
 labels=allLabels[ind]
 
 
 # Now redo the radial binning with similar scale as sdss
-Rmin=20. # kpc - note this is the geometric bin center, so measurements would need to go to radii 0.5*bin width smaller
+Rmin=40. # kpc - note this is the geometric bin center, so measurements would need to go to radii 0.5*bin width smaller
 Rmax=1000. # kpc - Use only bins at R<1Mpc
 dlog10R=np.median(np.log10(xshear_sdss[1:]/xshear_sdss[:-1])) # log bin spacing
 nBins=np.floor(np.log10(Rmax/Rmin)/dlog10R)+1
@@ -79,5 +79,5 @@ seed=None
 chains,lnprobs=lensmodel.fit.fitObs(priors,xshear,yshear,errshear,xmag,ymag,errmag,redshift=redshift,cenType=cenType,delta=delta,odType=odType,nWalkers=nWalkers,nBurn=nBurn,nSteps=nSteps,nThreads=nThreads,seed=seed)
 
 smooth=3
-lensmodel.plot.contourPlotAll(chains,lnprobs=lnprobs,inputPars=freePars,smooth=smooth,labels=labels,showPlot=False,filename=plotDir+"contours_4par_lsst_20.pdf")
+lensmodel.plot.contourPlotAll(chains,lnprobs=lnprobs,inputPars=freePars,smooth=smooth,labels=labels,showPlot=False,filename=plotDir+"contours_alt4par_lsst_40_b.pdf")
 
