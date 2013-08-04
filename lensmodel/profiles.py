@@ -410,9 +410,9 @@ def rhoAC(rkpc, mhalo, conc, od, MAC, isl, nuac, Aac, wac, mstars, rstars):
     rcontra=acProfile[0]*rhalo # kpc
     rhocontra=acProfile[1]*(mhalo+mstars)/(1.e3*rhalo)**3 # Msun/pc**3 - note, contra's mass is defined such that Mtot = Mhalo+Mstars = 1. The rho returned is DM only.
 
-    # extend AC profile using NFW outside virial radius
+    # extend AC profile using GNFW outside virial radius
     extFactor=10.
-    rExt,rhoExt=appendRhoNFW(rcontra,rhocontra,rhalo,conc,od,extFactor)
+    rExt,rhoExt=appendRhoGNFW(rcontra,rhocontra,rhalo,conc,isl,od,extFactor)
     
     # interpolate onto rkpc
     logInterp=scipy.interpolate.UnivariateSpline(np.log10(rExt),np.log10(rhoExt),s=0) # cubic spline interpolation on log axes. Allows extrapolation.
@@ -421,14 +421,17 @@ def rhoAC(rkpc, mhalo, conc, od, MAC, isl, nuac, Aac, wac, mstars, rstars):
     return rhoAC
 
 
-def appendRhoNFW(rkpc,rho,rhalo,conc,od,extFactor):
-    """Append NFW density profile from rhalo to extFactor*rhalo with log-spacing similar to input profile."""
+def appendRhoGNFW(rkpc,rho,rhalo,conc,isl,od,extFactor):
+    """Append GNFW density profile from rhalo to extFactor*rhalo with log-spacing similar to input profile."""
     nOld=len(rkpc)
     nExt=nOld * np.log10(extFactor/1.1)/np.log10(rkpc[-1]/rkpc[0]) # how many points on the extension
     rExt=rhalo*1.1 * np.logspace(0,np.log10(extFactor),num=nExt)
 
     mhalo=haloMass(rhalo, od)
-    rhoExt=rhoNFW(rExt, mhalo, conc, od)
+    if(isl==1.):
+        rhoExt=rhoNFW(rExt, mhalo, conc, od)
+    else:
+        rhoExt=rhoGNFW(rExt, mhalo, conc, isl, od)
 
     rNew=np.append(rkpc,rExt)
     rhoNew=np.append(rho,rhoExt)
