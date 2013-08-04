@@ -12,7 +12,7 @@ cosmo=esutil.cosmology.Cosmo(h=0.7,omega_m=0.3,omega_l=0.7)
 # r for 3d, R for 2d
 # 200c for default overdensity
 
-Rkpcfine=np.logspace(0,3.5) # used for finer sampling when interpolating
+Rkpcfine=np.logspace(0,3.5,num=10) # used for more extended / finer sampling when interpolating
 rkpcfine=Rkpcfine
 
 ####
@@ -395,7 +395,7 @@ def deltaSigmaPS(Rkpc, mass):
 ####
 def rhoAC(rkpc, mhalo, conc, od, MAC, isl, nuac, Aac, wac, mstars, rstars):
     """Return contracted profile at rkpc in Msun/pc**3.
-    Calls Gnedin's CONTRA code and goes to NFW beyond rhalo.
+    Calls Gnedin's CONTRA code and goes to GNFW beyond rhalo.
     """
 
     # Get contracted profile from Contra
