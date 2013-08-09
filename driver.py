@@ -41,8 +41,8 @@ cenType="hernquist"
 odType="critical"
 delta=200.
 
-priors=[(logMstars,0.3,8,13),logRstars,[11.5,12.5],[2.,10.],1.,[-0.2,1.0],-1.,-1.]
-ind=[0,2,3,5]
+priors=[[10.5,11.5],logRstars,[11.5,12.5],5.,1.,[-0.2,1.0],-1.,-1.]
+ind=[0,2,5]
 freePars=[inputPars[ii] for ii in ind]
 labels=allLabels[ind]
 
@@ -70,14 +70,22 @@ errmag=ymag / magSN
 # Run chains
 nWalkers=2000
 #nWalkers=100
-nBurn=50
-nSteps=250
-nThreads=48
+nBurn=100
+nSteps=1000
+nThreads=40
 #nThreads=8
 seed=None
 
 chains,lnprobs=lensmodel.fit.fitObs(priors,xshear,yshear,errshear,xmag,ymag,errmag,redshift=redshift,cenType=cenType,delta=delta,odType=odType,nWalkers=nWalkers,nBurn=nBurn,nSteps=nSteps,nThreads=nThreads,seed=seed)
 
+
+suffix="alt3par_lsst_40_long"
+
+lensmodel.io.writeRec(lensmodel.io.chainToRec(chains[0],lnprobs[0],labels=labels),dataDir+"chainM_{}.fits.gz".format(suffix))
+lensmodel.io.writeRec(lensmodel.io.chainToRec(chains[1],lnprobs[1],labels=labels),dataDir+"chainS_{}.fits.gz".format(suffix))
+lensmodel.io.writeRec(lensmodel.io.chainToRec(chains[2],lnprobs[2],labels=labels),dataDir+"chainSM_{}.fits.gz".format(suffix))
+
+
 smooth=3
-lensmodel.plot.contourPlotAll(chains,lnprobs=lnprobs,inputPars=freePars,smooth=smooth,labels=labels,showPlot=False,filename=plotDir+"contours_alt4par_lsst_40_b.pdf")
+lensmodel.plot.contourPlotAll(chains,lnprobs=lnprobs,inputPars=freePars,smooth=smooth,labels=labels,showPlot=False,filename=plotDir+"contours_{}.pdf".format(suffix))
 
