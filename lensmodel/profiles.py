@@ -12,7 +12,7 @@ cosmo=esutil.cosmology.Cosmo(h=0.7,omega_m=0.3,omega_l=0.7)
 # r for 3d, R for 2d
 # 200c for default overdensity
 
-Rkpcfine=np.logspace(0,3.5,num=10) # used for more extended / finer sampling when interpolating
+Rkpcfine=np.logspace(0,3.5,num=50) # used for more extended / finer sampling when interpolating
 rkpcfine=Rkpcfine
 
 ####
@@ -393,7 +393,7 @@ def deltaSigmaPS(Rkpc, mass):
 ####
 # Wrappers to CONTRA for contracted profiles
 ####
-def rhoAC(rkpc, mhalo, conc, od, MAC, isl, nuac, Aac, wac, mstars, rstars):
+def rhoAC(rkpc, mhalo, conc, od, MAC, isl, nuac, Aac, wac, mstars, rstars, nrad=81):
     """Return contracted profile at rkpc in Msun/pc**3.
     Calls Gnedin's CONTRA code and goes to GNFW beyond rhalo.
     """
@@ -403,7 +403,6 @@ def rhoAC(rkpc, mhalo, conc, od, MAC, isl, nuac, Aac, wac, mstars, rstars):
     fb=mstars/(mhalo+mstars) # baryon/total mass fraction
     rhalo=haloRadius(mhalo, od)
     rb=rstars/rhalo
-    nrad=81
     acProfile=contra.contra(MAC, BAR, conc, fb, rb, isl, nuac, Aac, wac, nrad)
 
     # convert profile to physical units
@@ -437,17 +436,17 @@ def appendRhoGNFW(rkpc,rho,rhalo,conc,isl,od,extFactor):
     rhoNew=np.append(rho,rhoExt)
     return (rNew,rhoNew)
 
-def sigmaAC(Rkpc, mhalo, conc, od, MAC, innerSlopeGNFW, nuDutton, AGnedin, wGnedin, mstars, rstars):
+def sigmaAC(Rkpc, mhalo, conc, od, MAC, innerSlopeGNFW, nuDutton, AGnedin, wGnedin, mstars, rstars, nrad=81):
     """Return surface mass density for contracted profile in Msun/pc**2.
     Simply calls rhoToSigma, lacking an analytic profile.
     """
-    return rhoToSigma(Rkpc, rkpcfine, rhoAC(rkpcfine, mhalo, conc, od, MAC, innerSlopeGNFW, nuDutton, AGnedin, wGnedin, mstars, rstars))
+    return rhoToSigma(Rkpc, rkpcfine, rhoAC(rkpcfine, mhalo, conc, od, MAC, innerSlopeGNFW, nuDutton, AGnedin, wGnedin, mstars, rstars, nrad=nrad))
 
-def deltaSigmaAC(Rkpc, mhalo, conc, od, MAC, innerSlopeGNFW, nuDutton, AGnedin, wGnedin, mstars, rstars):
+def deltaSigmaAC(Rkpc, mhalo, conc, od, MAC, innerSlopeGNFW, nuDutton, AGnedin, wGnedin, mstars, rstars, nrad=81):
     """Return DS for contracted profile in Msun/pc**2.
     Simply calls sigmaToDeltaSigma, lacking an analytic profile.
     """
-    return sigmaToDeltaSigma(Rkpc, Rkpcfine, sigmaAC(Rkpcfine, mhalo, conc, od, MAC, innerSlopeGNFW, nuDutton, AGnedin, wGnedin, mstars, rstars))
+    return sigmaToDeltaSigma(Rkpc, Rkpcfine, sigmaAC(Rkpcfine, mhalo, conc, od, MAC, innerSlopeGNFW, nuDutton, AGnedin, wGnedin, mstars, rstars, nrad=nrad))
 
 
 ####
