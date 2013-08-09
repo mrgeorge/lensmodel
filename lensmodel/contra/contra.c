@@ -282,6 +282,7 @@ int pymain(int MACin, int BARin, double cin, double fbin, double rbin, double in
   A=Ain;
   w=win;
   n=nrad;
+  n3=5*n/4;
 
   if(BAR < 1 || BAR > 2) { fprintf(stderr, ": baryon distribution must be 1 or 2\n"); return 1; }
   if((MAC!=2) && (nu!=1.)) { nu=1.; } // silently set nu=1 if we're not in Dutton mode
