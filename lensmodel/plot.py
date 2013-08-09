@@ -141,7 +141,7 @@ def contourPlotAll(chains,lnprobs=None,inputPars=None,showMax=True,showPeakKDE=T
 	    ylim=limArr[row]
 	    if(row == col):
                 #		histvals=axarr[row,col].hist(xarrs,bins=50,range=xlim,histtype="step",color=histColors)
-                xKDE=np.linspace(xlim[0],xlim[1],num=50)
+                xKDE=np.linspace(xlim[0],xlim[1],num=100)
                 for ii in range(nChains):
                     kern=scipy.stats.gaussian_kde(xarrs[ii])
                     yKDE=kern(xKDE)
