@@ -182,9 +182,9 @@ def contourPlotAll(chains,lnprobs=None,inputPars=None,showMax=True,showPeakKDE=T
     if(showPlot):
 	fig.show()
 
-def plotProfile(xarr,yarr,xlim=None,ylim=None,xscale="log",yscale="log",xlabel="R (kpc)",ylabel=None,color="black",ls="-",label=None):
+def plotProfile(xarr,yarr,xlim=None,ylim=None,xscale="log",yscale="log",xlabel="R (kpc)",ylabel=None,color="black",ls="-",lw=3,label=None):
 
-    plt.plot(xarr,yarr,color=color,ls=ls,label=label)
+    plt.plot(xarr,yarr,color=color,ls=ls,label=label,lw=lw)
 
     if(xlim is not None):
         plt.xlim(xlim)
