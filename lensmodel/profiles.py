@@ -360,7 +360,16 @@ def sigmaHernquist(Rkpc, mass, rhern):
     Assumes Upsilon=1 (i.e. consistently uses mass, not light)
     """
     ss=Rkpc/rhern
-    sigma=mass/(2.*np.pi*(1.e3*rhern)**2*(1.-ss**2)**2) * ((2.+ss**2)*hernX(ss) - 3.)
+    mid=(ss == 1.)
+    if(isinstance(ss,collections.Iterable)):
+        sigma=np.zeros_like(ss)
+        sigma[~mid]=mass/(2.*np.pi*(1.e3*rhern)**2*(1.-ss[~mid]**2)**2) * ((2.+ss[~mid]**2)*hernX(ss[~mid]) - 3.)
+        sigma[mid]=2.*mass/(15.*np.pi*(1.e3*rhern)**2)
+    else:
+        if(mid):
+            sigma=2.*mass/(15.*np.pi*(1.e3*rhern)**2)
+        else:
+            sigma=mass/(2.*np.pi*(1.e3*rhern)**2*(1.-ss**2)**2) * ((2.+ss**2)*hernX(ss) - 3.)
     return sigma
 
 def hernX(ss):
@@ -368,14 +377,18 @@ def hernX(ss):
     ss can be a scalar or iterable type
     """
     low=((ss >= 0) & (ss <= 1))
+    mid=(ss==1.)
     high=(ss>1)
     if(isinstance(ss,collections.Iterable)):
         XX=np.zeros_like(ss)
         XX[low]=1./np.sqrt(1.-ss[low]**2) * np.log((1.+np.sqrt(1.-ss[low]**2))/ss[low])
+        XX[mid]=1.
         XX[high]=1./np.sqrt(ss[high]**2-1.) * np.arccos(1./ss[high])
     else: # ss is a scalar
         if(low):
             XX=1./np.sqrt(1.-ss**2) * np.log((1.+np.sqrt(1.-ss**2))/ss)
+        elif(mid):
+            XX=1.
         elif(high):
             XX=1./np.sqrt(ss**2-1.) * np.arccos(1./ss)
     return XX
