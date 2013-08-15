@@ -403,6 +403,13 @@ def deltaSigmaPS(Rkpc, mass):
     """Return DS for a point source in Msun/pc**2."""
     return mass/(np.pi*(1.e3*Rkpc)**2)
 
+def RdevTorHern(Rdev):
+    """Return 3d scale length for Hernquist profile from 2d de Vaucouleurs radius
+    Hernquist 1990, Eq. 38
+    """
+    rhern=Rdev/1.8153
+    return rhern
+
 ####
 # Wrappers to CONTRA for contracted profiles
 ####
