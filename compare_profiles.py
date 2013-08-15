@@ -9,8 +9,8 @@ redshift=0.11
 mstars=7.e10
 mhalo=0.7e13
 conc=9.
-rstars=4.3/(1.+redshift) # convert Schulz' comoving coords to physical
-rhern=rstars
+Rdev=4.3/(1.+redshift) # convert Schulz' comoving coords to physical
+rhern=lensmodel.profiles.RdevTorHern(Rdev)
 innerSlopeGNFW=1.
 nuDuttonAC=1.
 nuDuttonExp=-0.2
@@ -32,25 +32,25 @@ rkpc=Rkpc
 nradAC=500
 
 rhoNFW=lensmodel.profiles.rhoNFW(rkpc, mhalo, conc, od)
-rhoAC=lensmodel.profiles.rhoAC(rkpc, mhalo, conc, od, 2, innerSlopeGNFW, nuDuttonAC, AGnedin, wGnedin, mstars, rstars, nrad=nradAC)
-rhoExp=lensmodel.profiles.rhoAC(rkpc, mhalo, conc, od, 2, innerSlopeGNFW, nuDuttonExp, AGnedin, wGnedin, mstars, rstars, nrad=nradAC)
+rhoAC=lensmodel.profiles.rhoAC(rkpc, mhalo, conc, od, 2, innerSlopeGNFW, nuDuttonAC, AGnedin, wGnedin, mstars, rhern, nrad=nradAC)
+rhoExp=lensmodel.profiles.rhoAC(rkpc, mhalo, conc, od, 2, innerSlopeGNFW, nuDuttonExp, AGnedin, wGnedin, mstars, rhern, nrad=nradAC)
 rhoHern=lensmodel.profiles.rhoHernquist(rkpc,mstars,rhern)
 
 sigmaNFW=lensmodel.profiles.sigmaNFW(Rkpc, mhalo, conc, od)
-sigmaAC=lensmodel.profiles.sigmaAC(Rkpc, mhalo, conc, od, 2, innerSlopeGNFW, nuDuttonAC, AGnedin, wGnedin, mstars, rstars, nrad=nradAC)
-sigmaExp=lensmodel.profiles.sigmaAC(Rkpc, mhalo, conc, od, 2, innerSlopeGNFW, nuDuttonExp, AGnedin, wGnedin, mstars, rstars, nrad=nradAC)
+sigmaAC=lensmodel.profiles.sigmaAC(Rkpc, mhalo, conc, od, 2, innerSlopeGNFW, nuDuttonAC, AGnedin, wGnedin, mstars, rhern, nrad=nradAC)
+sigmaExp=lensmodel.profiles.sigmaAC(Rkpc, mhalo, conc, od, 2, innerSlopeGNFW, nuDuttonExp, AGnedin, wGnedin, mstars, rhern, nrad=nradAC)
 sigmaHern=lensmodel.profiles.sigmaHernquist(Rkpc,mstars,rhern)
 
 deltaSigmaNFW=lensmodel.profiles.deltaSigmaNFW(Rkpc, mhalo, conc, od)
-deltaSigmaAC=lensmodel.profiles.deltaSigmaAC(Rkpc, mhalo, conc, od, 2, innerSlopeGNFW, nuDuttonAC, AGnedin, wGnedin, mstars, rstars, nrad=nradAC)
-deltaSigmaExp=lensmodel.profiles.deltaSigmaAC(Rkpc, mhalo, conc, od, 2, innerSlopeGNFW, nuDuttonExp, AGnedin, wGnedin, mstars, rstars, nrad=nradAC)
+deltaSigmaAC=lensmodel.profiles.deltaSigmaAC(Rkpc, mhalo, conc, od, 2, innerSlopeGNFW, nuDuttonAC, AGnedin, wGnedin, mstars, rhern, nrad=nradAC)
+deltaSigmaExp=lensmodel.profiles.deltaSigmaAC(Rkpc, mhalo, conc, od, 2, innerSlopeGNFW, nuDuttonExp, AGnedin, wGnedin, mstars, rhern, nrad=nradAC)
 deltaSigmaHern=lensmodel.profiles.deltaSigmaHernquist(Rkpc,mstars,rhern)
 
 plt.clf()
 figsize=(10,5)
 logSigLim=(1.,2.e3)
 logRhoLim=(1.e-8,1.)
-linYLim=(0.75,1.09)
+linYLim=(0.65,1.14)
 lw=3
 
 plt.rc('font',**{'family':'sans-serif','sans-serif':['Helvetica'],'size':12})
