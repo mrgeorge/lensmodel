@@ -81,7 +81,7 @@ def interpretPriors(priors):
                     else:
                         raise ValueError(prior)
                 else:
-                    raise ValueError(prior)
+                    raise ValueError(ii,prior,type(prior))
 
 
     # remove fixed entries from list of pars to fit
