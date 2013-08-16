@@ -28,35 +28,35 @@ def main(survey, target, Rmin, magFrac, concPriorType, nThreads=8):
     plotDir="/data/mgeorge/sdsslens/plots/"
 
     if(survey=="sdss"):
-        n_source=1.2 # N shear sources / sq. arcmin
-        z_source=1. # effective source redshift
-        A_survey=9243. # survey area in deg**2
+        n_source=1.2 # N shear sources / sq. arcmin (Reyes 2012)
+        z_source=1. # effective source redshift [actually mean=0.42, med=0.39 from N11]
+        A_survey=9243. # survey area in deg**2 (Reyes 2012 DR8 - they used only 7131 for DR7 lenses)
     elif(survey=="des"):
-        n_source=12.
-        z_source=1.
-        A_survey=5000.
+        n_source=12. # DES proposal https://www.darkenergysurvey.org/reports/proposal-standalone.pdf
+        z_source=1. # DES proposal uses zmed=0.68
+        A_survey=5000. # DES proposal
     elif(survey=="lsst"):
-        n_source=37.
-        z_source=1.
-        A_survey=18000.
+        n_source=37. # Chang 2013
+        z_source=1. # Chang 2013 zmed = 0.82 for fiducial case 1. in Table 2
+        A_survey=18000. # Chang 2013
     else:
         raise ValueError(survey)
 
     # Input model pars
     if(target=="galaxy"):
-        n_lens=1. # N lens galaxies / sq. deg
-        z_lens=0.1
-        logMstars=10.5
-        logRstars=0.5
-        logMhalo=12.0
-        conc=10.
+        n_lens=(0.5*75086 / 7131.) # N lens galaxies / sq. deg - Schulz 2010 faint sample [half the full sample 75086, DR7 area 7131]
+        z_lens=0.1 # Actually 0.11 from Schulz 2010 faint sample
+        logMstars=np.log10(7.e10) # Schulz 2010 faint sample
+        logRstars=np.log10(lensmodel.profiles.RdevTorHern(4.3/(1.+z_lens))) # Schulz 2010 faint sample, convert comoving Rdev to physical rHern
+        logMhalo=np.log10(7.e12) # Schulz 2010 faint sample
+        conc=9. # Schulz 2010 faint sample
     elif(target=="cluster"):
-        n_lens=1.e-3
-        z_lens=0.1
-        logMstars=11.
-        logRstars=1.
-        logMhalo=14.0
-        conc=5.
+        n_lens=(1711+787+272+47.)/6670. # Top 4 richness bins from Johnston 2007. N from Table 1, Area: SDSS DR4 - Sheldon 2009 says they use a somewhat smaller area, but doesn't seem to specify
+        z_lens=0.1 # ? probably more like 0.2 or 0.3
+        logMstars=12. # rough estimate from Johnston 2007
+        logRstars=1. # ?
+        logMhalo=np.log10(95.96e12) # 4th highest richness bin from Johnston 2007
+        conc=5.82 # 4th highester richness bin from Johnston 2007
     else:
         raise ValueError(target)
     innerSlopeGNFW=1.
@@ -116,10 +116,10 @@ def main(survey, target, Rmin, magFrac, concPriorType, nThreads=8):
 
 
     # Run chains
-    nWalkers=200
-    nBurn=10
-    nSteps=30
-    seed=None
+    nWalkers=2000
+    nBurn=100
+    nSteps=2000
+    seed=7
 
     chains,lnprobs=lensmodel.fit.fitObs(priors,xshear,yshear,errshear,xmag,ymag,errmag,redshift=z_lens,cenType=cenType,delta=delta,odType=odType,nWalkers=nWalkers,nBurn=nBurn,nSteps=nSteps,nThreads=nThreads,seed=seed)
 
