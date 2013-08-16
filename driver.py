@@ -87,7 +87,7 @@ def main(survey, target, Rmin, magFrac, concPriorType, nThreads=8):
     freePars=[inputPars[ii] for ii in freeInd]
     labels=allLabels[freeInd]
 
-    priors=[[logMstars-0.5,logMstars+0.5],logRstars,[logMhalo-0.5,logMhalo+0.5],concPrior,innerSlopeGNFW,[-0.2,1.0],AGnedin,wGnedin]
+    priors=[[logMstars-0.5,logMstars+0.5],float(logRstars),[logMhalo-0.5,logMhalo+0.5],concPrior,float(innerSlopeGNFW),[-0.2,1.0],float(AGnedin),float(wGnedin)]
 
 
     # Setup radial binning
