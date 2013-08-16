@@ -4,7 +4,7 @@ import lensmodel
 import numpy as np
 import sys
 
-def main(survey, target, Rmin, magFrac, concPriorType):
+def main(survey, target, Rmin, magFrac, concPriorType, nThreads=8):
     """Forecast model constraints for a given lensing experiment
 
     Inputs:
@@ -17,7 +17,7 @@ def main(survey, target, Rmin, magFrac, concPriorType):
             true=conc is fixed to true value
             high=conc is fixed to conc + 1sigma
             free=conc is free with flat prior conc+/-2sigma
-
+        nThreads - number of threads available (default 8)
     Outputs:
         Writes chains to dataDir and contour plot to plotDir
     
@@ -119,8 +119,6 @@ def main(survey, target, Rmin, magFrac, concPriorType):
     nWalkers=200
     nBurn=10
     nSteps=30
-    #nThreads=48
-    nThreads=8
     seed=None
 
     chains,lnprobs=lensmodel.fit.fitObs(priors,xshear,yshear,errshear,xmag,ymag,errmag,redshift=z_lens,cenType=cenType,delta=delta,odType=odType,nWalkers=nWalkers,nBurn=nBurn,nSteps=nSteps,nThreads=nThreads,seed=seed)
@@ -138,7 +136,7 @@ def main(survey, target, Rmin, magFrac, concPriorType):
 if __name__ == "__main__":
 # if called from command line
 
-    if(len(sys.argv)!=6):
+    if(len(sys.argv)!=7):
         print """Calling sequence: driver.py survey target Rmin magFrac concPriorType
         Inputs:
             survey - string (sdss, des, lsst)
@@ -149,7 +147,9 @@ if __name__ == "__main__":
                 low=conc is fixed to conc - 1sigma
                 true=conc is fixed to true value
                 high=conc is fixed to conc + 1sigma
-                free=conc is free with flat prior conc+/-2sigma"""
+                free=conc is free with flat prior conc+/-2sigma
+            nThreads - number of threads available
+            """
         raise ValueError(sys.argv)
 
     survey=sys.argv[1]
@@ -157,6 +157,7 @@ if __name__ == "__main__":
     Rmin=float(sys.argv[3])
     magFrac=float(sys.argv[4])
     concPriorType=sys.argv[5]
+    nThreads=int(sys.argv[6])
 
-    main(survey,target,Rmin,magFrac,concPriorType)
+    main(survey,target,Rmin,magFrac,concPriorType,nThreads=nThreads)
     
