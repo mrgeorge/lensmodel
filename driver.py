@@ -74,11 +74,11 @@ def main(survey, target, Rmin, magFrac, concPriorType, nThreads=8):
     freeInd=[0,2,5] # list of free pars - default is [logMstars, logMhalo, nuDutton] but conc can be added
     sigmaLogC=0.2 # base 10 lognormal scatter in c-M
     if(concPriorType=="low"):
-        concPrior=10.**(np.log10(conc)-sigmaLogC)
+        concPrior=float(10.**(np.log10(conc)-sigmaLogC))
     elif(concPriorType=="true"):
-        concPrior=conc
+        concPrior=float(conc)
     elif(concPriorType=="high"):
-        concPrior=10.**(np.log10(conc)+sigmaLogC)
+        concPrior=float(10.**(np.log10(conc)+sigmaLogC))
     elif(concPriorType=="free"):
         concPrior=[10.**(np.log10(conc) - 2.*sigmaLogC), 10.**(np.log10(conc) + 2.*sigmaLogC)]
         freeInd=[0,2,3,5]
