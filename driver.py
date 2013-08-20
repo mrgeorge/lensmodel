@@ -22,32 +22,7 @@ def getSurveyPars(survey):
 
     return (n_source,z_source,A_survey)
 
-def main(survey, target, Rmin, magFrac, concPriorType, nThreads=8):
-    """Forecast model constraints for a given lensing experiment
-
-    Inputs:
-        survey - string (sdss, des, lsst)
-        target - string (galaxy, cluster)
-        Rmin - minimum bin radius in kpc
-        magFrac - ratio of errshear/errmag = (sigma_shear / sqrt(n_source_shear)) / (sigma_mag / sqrt(n_source_mag))
-        concPriorType - how should concentration be treated in the fit (low, true, high, free)
-            low=conc is fixed to conc - 1sigma
-            true=conc is fixed to true value
-            high=conc is fixed to conc + 1sigma
-            free=conc is free with flat prior conc+/-2sigma
-        nThreads - number of threads available (default 8)
-    Outputs:
-        Writes chains to dataDir and contour plot to plotDir
-    
-    """
-
-    suffix="{}_{}_{}_{}_c{}".format(survey,target,Rmin,magFrac,concPriorType)
-    dataDir="/data/mgeorge/sdsslens/data/"
-    plotDir="/data/mgeorge/sdsslens/plots/"
-
-    n_source,z_source,A_survey=getSurveyPars(survey)
-
-    # Input model pars
+def getModelPars(target):
     if(target=="galaxy"):
         n_lens=(0.5*75086 / 7131.) # N lens galaxies / sq. deg - Schulz 2010 faint sample [half the full sample 75086, DR7 area 7131]
         z_lens=0.1 # Actually 0.11 from Schulz 2010 faint sample
@@ -74,6 +49,37 @@ def main(survey, target, Rmin, magFrac, concPriorType, nThreads=8):
     odType="critical"
     delta=200.
 
+    return (n_lens,z_lens,inputPars,allLabels,cenType,odType,delta)
+
+def main(survey, target, Rmin, magFrac, concPriorType, nThreads=8):
+    """Forecast model constraints for a given lensing experiment
+
+    Inputs:
+        survey - string (sdss, des, lsst)
+        target - string (galaxy, cluster)
+        Rmin - minimum bin radius in kpc
+        magFrac - ratio of errshear/errmag = (sigma_shear / sqrt(n_source_shear)) / (sigma_mag / sqrt(n_source_mag))
+        concPriorType - how should concentration be treated in the fit (low, true, high, free)
+            low=conc is fixed to conc - 1sigma
+            true=conc is fixed to true value
+            high=conc is fixed to conc + 1sigma
+            free=conc is free with flat prior conc+/-2sigma
+        nThreads - number of threads available (default 8)
+    Outputs:
+        Writes chains to dataDir and contour plot to plotDir
+    
+    """
+
+    suffix="{}_{}_{}_{}_c{}".format(survey,target,Rmin,magFrac,concPriorType)
+    dataDir="/data/mgeorge/sdsslens/data/"
+    plotDir="/data/mgeorge/sdsslens/plots/"
+
+    # Survey pars
+    n_source,z_source,A_survey=getSurveyPars(survey)
+
+    # Input model pars
+    n_lens,z_lens,inputPars,allLabels,cenType,odType,delta=getModelPars(target)
+    logMstars, logRstars, logMhalo, conc, innerSlopeGNFW, nuDutton, AGnedin, wGnedin=inputPars
 
     # Choose free parameters and set priors
     freeInd=[0,2,5] # list of free pars - default is [logMstars, logMhalo, nuDutton] but conc can be added
