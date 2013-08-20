@@ -4,6 +4,24 @@ import lensmodel
 import numpy as np
 import sys
 
+def getSurveyPars(survey):
+    if(survey=="sdss"):
+        n_source=1.2 # N shear sources / sq. arcmin (Reyes 2012)
+        z_source=1. # effective source redshift [actually mean=0.42, med=0.39 from N11]
+        A_survey=9243. # survey area in deg**2 (Reyes 2012 DR8 - they used only 7131 for DR7 lenses)
+    elif(survey=="des"):
+        n_source=12. # DES proposal https://www.darkenergysurvey.org/reports/proposal-standalone.pdf
+        z_source=1. # DES proposal uses zmed=0.68
+        A_survey=5000. # DES proposal
+    elif(survey=="lsst"):
+        n_source=37. # Chang 2013
+        z_source=1. # Chang 2013 zmed = 0.82 for fiducial case 1. in Table 2
+        A_survey=18000. # Chang 2013
+    else:
+        raise ValueError(survey)
+
+    return (n_source,z_source,A_survey)
+
 def main(survey, target, Rmin, magFrac, concPriorType, nThreads=8):
     """Forecast model constraints for a given lensing experiment
 
@@ -27,20 +45,7 @@ def main(survey, target, Rmin, magFrac, concPriorType, nThreads=8):
     dataDir="/data/mgeorge/sdsslens/data/"
     plotDir="/data/mgeorge/sdsslens/plots/"
 
-    if(survey=="sdss"):
-        n_source=1.2 # N shear sources / sq. arcmin (Reyes 2012)
-        z_source=1. # effective source redshift [actually mean=0.42, med=0.39 from N11]
-        A_survey=9243. # survey area in deg**2 (Reyes 2012 DR8 - they used only 7131 for DR7 lenses)
-    elif(survey=="des"):
-        n_source=12. # DES proposal https://www.darkenergysurvey.org/reports/proposal-standalone.pdf
-        z_source=1. # DES proposal uses zmed=0.68
-        A_survey=5000. # DES proposal
-    elif(survey=="lsst"):
-        n_source=37. # Chang 2013
-        z_source=1. # Chang 2013 zmed = 0.82 for fiducial case 1. in Table 2
-        A_survey=18000. # Chang 2013
-    else:
-        raise ValueError(survey)
+    n_source,z_source,A_survey=getSurveyPars(survey)
 
     # Input model pars
     if(target=="galaxy"):
