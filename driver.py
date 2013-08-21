@@ -51,9 +51,7 @@ def getModelPars(target):
 
     return (n_lens,z_lens,inputPars,allLabels,cenType,odType,delta)
 
-def getRadialBins(Rmin):
-    Rmax=2000. # kpc - upper end of largest bin
-    dlog10R=0.15
+def getRadialBins(Rmin,Rmax,dlog10R):
     nBins=np.floor(np.log10(Rmax/Rmin)/dlog10R)+1
     xbins=Rmin*10.**(np.arange(nBins) * dlog10R)
     xshear=10.**(np.log10(xbins[:-1])+0.5*dlog10R)
@@ -111,7 +109,9 @@ def main(survey, target, Rmin, magFrac, concPriorType, nThreads=8):
 
 
     # Setup radial binning
-    xbins,xshear=getRadialBins(Rmin)
+    Rmax=2000. # kpc - upper end of largest bin
+    dlog10R=0.15
+    xbins,xshear=getRadialBins(Rmin,Rmax,dlog10R)
 
     # Evaluate the shear model at these points - this will be the shear data vector
     yshear=lensmodel.profiles.deltaSigma(inputPars,xshear)
