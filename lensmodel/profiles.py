@@ -18,7 +18,7 @@ rkpcfine=Rkpcfine
 ####
 # Top Level (generic) Density and Mass Profiles
 ####
-def rho(pars, rkpc, redshift=0.1, cenType="hernquist", delta=200., odType="critical"):
+def rho(pars, rkpc, redshift=0.1, cenType="hernquist", delta=200., odType="critical", rhoStarsOut=None, rhoHaloOut=None):
 
     # Unpack model parameters
     logMstars, logRstars, logMhalo, conc, innerSlopeGNFW, nuDutton, AGnedin, wGnedin = pars
@@ -54,9 +54,15 @@ def rho(pars, rkpc, redshift=0.1, cenType="hernquist", delta=200., odType="criti
 
     rhoTot=rhoStars+rhoHalo
 
+    # Save profiles to outputs if desired (probably won't work for non-iterable Rkpc)
+    if(rhoStarsOut is not None):
+       rhoStarsOut[:]=rhoStars
+    if(rhoHaloOut is not None):
+       rhoHaloOut[:]=rhoHalo
+
     return rhoTot
 
-def sigma(pars, Rkpc, redshift=0.1, cenType="hernquist", delta=200., odType="critical"):
+def sigma(pars, Rkpc, redshift=0.1, cenType="hernquist", delta=200., odType="critical", sigmaStarsOut=None, sigmaHaloOut=None):
 
     # Unpack model parameters
     logMstars, logRstars, logMhalo, conc, innerSlopeGNFW, nuDutton, AGnedin, wGnedin = pars
@@ -92,10 +98,16 @@ def sigma(pars, Rkpc, redshift=0.1, cenType="hernquist", delta=200., odType="cri
 
     sigmaTot=sigmaStars+sigmaHalo
 
+    # Save profiles to outputs if desired (probably won't work for non-iterable Rkpc)
+    if(sigmaStarsOut is not None):
+       sigmaStarsOut[:]=sigmaStars
+    if(sigmaHaloOut is not None):
+       sigmaHaloOut[:]=sigmaHalo
+    
     return sigmaTot
 
 
-def deltaSigma(pars, Rkpc, redshift=0.1, cenType="hernquist", delta=200., odType="critical"):
+def deltaSigma(pars, Rkpc, redshift=0.1, cenType="hernquist", delta=200., odType="critical", deltaSigmaStarsOut=None, deltaSigmaHaloOut=None):
 
     # Unpack model parameters
     logMstars, logRstars, logMhalo, conc, innerSlopeGNFW, nuDutton, AGnedin, wGnedin = pars
@@ -130,6 +142,12 @@ def deltaSigma(pars, Rkpc, redshift=0.1, cenType="hernquist", delta=200., odType
         raise ValueError(innerSlopeGNFW, nuDutton, AGnedin, wGnedin)
 
     deltaSigmaTot=deltaSigmaStars+deltaSigmaHalo
+
+    # Save profiles to outputs if desired (probably won't work for non-iterable Rkpc)
+    if(deltaSigmaStarsOut is not None):
+       deltaSigmaStarsOut[:]=deltaSigmaStars
+    if(deltaSigmaHaloOut is not None):
+       deltaSigmaHaloOut[:]=deltaSigmaHalo
 
     return deltaSigmaTot
 
@@ -489,6 +507,8 @@ def stellarMassToHaloMass(logSM, redshift):
     Values drawn from Table 2
     NOTE: Behroozi uses overdensity=delta_vir*background for abundance matching
     """
+    # TO DO - check that h-dependence is right - Behroozi assumes h=0.7
+    
     logSM00=10.72
     logSM0a=0.55
     logM10=12.35
@@ -512,3 +532,38 @@ def stellarMassToHaloMass(logSM, redshift):
     logMhalo=logM1 + beta*(logSM - logSM0) + 10.**(delta*(logSM-logSM0)) / (1.+10.**(-gamma*(logSM-logSM0))) - 0.5
     return 10.**logMhalo
 
+def schechterSMF(logSM,phiStar,alpha,logMstar):
+    return phiStar * 10.**((logSM - logMstar)* alpha) * np.exp(-10.**(logSM - logMstar))
+    
+def liwhiteSMF(logSM):
+    # TO DO - check that h-dependence is right
+
+    logSM_overh2 = logSM + np.log10((cosmo.H0()/100.)**2)
+
+    if((np.min(logSM_overh2 < 8.00)) | (np.max(logSM_overh2) > 12.00)):
+        raise ValueError(np.min(logSM_overh2),np.max(logSM_overh2))
+    
+    low=((logSM_overh2 > 8.00) & (logSM_overh2 <= 9.33))
+    mid=((logSM_overh2 > 9.33) & (logSM_overh2 <= 10.67))
+    high=((logSM_overh2 > 10.67) & (logSM_overh2 <= 12.00))
+
+    phiStar=[0.0146,0.0132,0.0044]
+    alpha=[-1.13,-0.90,-1.99]
+    logMstar=[9.61,10.37,10.71]
+    
+    if(isinstance(logSM,collections.Iterable)):
+        phi_h3=np.zeros(len(logSM))
+        phi_h3[low]=schechterSMF(logSM_overh2[low],phiStar[0],alpha[0],logMstar[0])
+        phi_h3[mid]=schechterSMF(logSM_overh2[mid],phiStar[1],alpha[1],logMstar[1])
+        phi_h3[high]=schechterSMF(logSM_overh2[high],phiStar[2],alpha[2],logMstar[2])
+    else:
+        if(low):
+            phi_h3=schechterSMF(logSM_overh2,phiStar[0],alpha[0],logMstar[0])
+        elif(mid):
+            phi_h3=schechterSMF(logSM_overh2,phiStar[1],alpha[1],logMstar[1])
+        elif(high):
+            phi_h3=schechterSMF(logSM_overh2,phiStar[2],alpha[2],logMstar[2])
+        
+    phi=phi_h3/(cosmo.H0()/100.)**3
+    
+    return phi
