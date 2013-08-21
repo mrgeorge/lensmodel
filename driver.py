@@ -125,7 +125,7 @@ def main(survey, target, Rmin, magFrac, concPriorType, nThreads=8):
     Sigma_crit=1./lensmodel.profiles.cosmo.sigmacritinv(z_lens, z_source) # in Msun/pc**2
     xarea_kpc2=np.pi*(xbins[1:]**2 - xbins[:-1]**2)
     xarea_arcmin2=xarea_kpc2/(lensmodel.profiles.cosmo.Da(0.,z_lens) * 1000. * np.deg2rad(1./60.))**2 # denom is (kpc/arcmin)**2
-    errshear = sigma_shear / (Sigma_crit * np.sqrt(n_source * xarea_arcmin2 * n_lens * A_survey))
+    errshear = sigma_shear * Sigma_crit / np.sqrt(n_source * xarea_arcmin2 * n_lens * A_survey)
 
     # Scale error bars for magnification
     errmag=errshear / magFrac
