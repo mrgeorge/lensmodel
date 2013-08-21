@@ -200,10 +200,13 @@ def fitObs(priors,xshear,yshear,errshear,xmag,ymag,errmag,**kwargs):
 
     print "Magnification"
     samplerM=runMCMC(priors,None,None,None,xmag,ymag,errmag,**kwargs)
+    print("Mean acceptance fraction: {0:.3f}".format(np.mean(samplerM.acceptance_fraction)))
     print "Shear"
     samplerS=runMCMC(priors,xshear,yshear,errshear,None,None,None,**kwargs)
+    print("Mean acceptance fraction: {0:.3f}".format(np.mean(samplerS.acceptance_fraction)))
     print "Combined"
     samplerSM=runMCMC(priors,xshear,yshear,errshear,xmag,ymag,errmag,**kwargs)
+    print("Mean acceptance fraction: {0:.3f}".format(np.mean(samplerSM.acceptance_fraction)))
     
     flatchainM=samplerM.flatchain
     flatlnprobM=samplerM.flatlnprobability
@@ -216,6 +219,10 @@ def fitObs(priors,xshear,yshear,errshear,xmag,ymag,errmag,**kwargs):
     goodS=(flatlnprobS > -np.Inf)
     goodSM=(flatlnprobSM > -np.Inf)
 
+    print "M finite fraction: {0.3f}".format(float(len(flatlnprobM))/len(goodM.nonzero()[0]))
+    print "S finite fraction: {0.3f}".format(float(len(flatlnprobS))/len(goodS.nonzero()[0]))
+    print "SM finite fraction: {0.3f}".format(float(len(flatlnprobSM))/len(goodSM.nonzero()[0]))
+    
     chains=[flatchainM[goodM], flatchainS[goodS], flatchainSM[goodSM]]
     lnprobs=[flatlnprobM[goodM],flatlnprobS[goodS],flatlnprobSM[goodSM]]
     return (chains,lnprobs)
