@@ -536,7 +536,6 @@ def schechterSMF(logSM,phiStar,alpha,logMstar):
     return phiStar * 10.**((logSM - logMstar)* alpha) * np.exp(-10.**(logSM - logMstar))
     
 def liwhiteSMF(logSM):
-    # TO DO - check that h-dependence is right
 
     logSM_overh2 = logSM + np.log10((cosmo.H0()/100.)**2)
 
@@ -564,6 +563,6 @@ def liwhiteSMF(logSM):
         elif(high):
             phi_h3=schechterSMF(logSM_overh2,phiStar[2],alpha[2],logMstar[2])
         
-    phi=phi_h3/(cosmo.H0()/100.)**3
+    phi=phi_h3 * (cosmo.H0()/100.)**3
     
     return phi
