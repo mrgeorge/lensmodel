@@ -100,10 +100,11 @@ for tt,lw in zip(target,targetLWs):
         # Shear
         plt.sca(axarr[1])
         ltarget,=lensmodel.plot.plotProfile(xshearfine,yshearfine,xlim=xlim,ylim=logSigLim,xlabel=r"$R$ (kpc)",ylabel=r"$\Delta\Sigma~($M$_{\odot}~$pc$^{-2})$",lw=lw,ls=totalLS,label=r"log($M_{\star}$)="+tt[2:])
-        if(tt==target[0]):
-            targetLines=np.array(ltarget)
-        else:
-            targetLines=np.append(targetLines,ltarget)
+        if(ss==survey[0]):
+            if(tt==target[0]):
+                targetLines=np.array(ltarget)
+            else:
+                targetLines=np.append(targetLines,ltarget)
         lensmodel.plot.plotProfile(xshearfine,yshearstars,color=starsColor,ls=starsLS,lw=lw,zorder=1)
         lensmodel.plot.plotProfile(xshearfine,yshearhalo,color=haloColor,ls=haloLS,lw=lw,zorder=2)
         plt.errorbar(xshear*xoff,yshear,errshear,ecolor=scol,fmt=None,elinewidth=elw,zorder=10)
@@ -121,7 +122,7 @@ for ss,yy,scol in zip(survey,surveyYPos,surveyColors):
 
 plt.sca(axarr[1])
 targetLabels=[r"log($M_{\star}$)="+tt[2:] for tt in target[::-1]] # [::-1] reverses order
-targetLegend=plt.legend(targetLines,targetLabels,loc="upper right",frameon=False,prop={'size':11},labelspacing=0.3)
+targetLegend=plt.legend(targetLines[::-1],targetLabels,loc="upper right",frameon=False,prop={'size':11},labelspacing=0.3)
         
 plt.savefig(plotDir+"fiducial.pdf")
 #plt.show()
