@@ -23,6 +23,9 @@ def getSurveyPars(survey):
     return (n_source,z_source,A_survey)
 
 def getModelPars(target):
+    odType="critical"
+    delta=200.
+
     if(target=="galaxy"):
         n_lens=(0.5*75086 / 7131.) # N lens galaxies / sq. deg - Schulz 2010 faint sample [half the full sample 75086, DR7 area 7131]
         z_lens=0.1 # Actually 0.11 from Schulz 2010 faint sample
@@ -37,6 +40,18 @@ def getModelPars(target):
         logRstars=1. # ?
         logMhalo=np.log10(95.96e12) # 4th highest richness bin from Johnston 2007
         conc=5.82 # 4th highester richness bin from Johnston 2007
+    elif(target[:2]=="sm"): # e.g. sm9.5
+        logMstars=float(target[2:]) # parse target name to get log10 stellar mass
+        z_lens=0.1
+        dz_lens=0.05 # redshift range for lens sample centered on z_lens
+        dlog10SM=0.5 # log10 SM bin width centered on logMstars
+        n_lens=lensmodel.profiles.liwhiteSMF(logMstars)*lensmodel.profiles.cosmo.V(z_lens-0.5*dz_lens,z_lens+0.5*dz_lens) * dlog10SM * (np.pi/180.)**2/(4.*np.pi) # Li & White give SMF in N/Mpc**3/dex, this converts to N/deg**2 given survey depth dz_lens
+        logRstars=0.5 # TO DO - use mass-size relation?
+        logMvir=lensmodel.profiles.stellarMassToHaloMass(logMstars, z_lens) # Behroozi gives virial mass
+        cvir=lensmodel.profiles.concentration(10.**logMvir, z_lens, type="KlypinVir")
+        logMhalo=lensmodel.profiles.convertHaloMass(logMvir,cvir,z_lens,delta,odType) # convert to specified overdensity using Hu & Kravtsov 2003
+        conc=lensmodel.profiles.concentration(10.**logMhalo, z_lens, type="Klypin200")
+        
     else:
         raise ValueError(target)
     innerSlopeGNFW=1.
@@ -47,8 +62,6 @@ def getModelPars(target):
     allLabels=np.array(["logSM","logrh","logMh","conc","inner slope","nuDutton","AGnedin","wGnedin"])
     allPlotLabels=np.array([r"log($M_{\star}$)",r"log($r_{\star}$)",r"log($M_h$)",r"$c$",r"$\beta$",r"$\nu$",r"$A_G$",r"$w_G$"])
     cenType="hernquist"
-    odType="critical"
-    delta=200.
 
     return (n_lens,z_lens,inputPars,allLabels,allPlotLabels,cenType,odType,delta)
 
