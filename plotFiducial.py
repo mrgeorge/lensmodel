@@ -6,37 +6,44 @@ import matplotlib.pyplot as plt
 import driver
 import lensmodel
 import numpy as np
+import string
 
 survey=["sdss","lsst"]
 xoffs=[0.96,1.04]
-surveyColors=["gray","slategray"]
-elw=3
+surveyColors=["lightgrey","slategray"]
+elw=2
 
-target=["galaxy","cluster"]
-targetLWs=[2,4]
+#target=["galaxy","cluster"]
+target=["sm9.5","sm10.5","sm11.5"]
+#targetLWs=[2,4]
+targetLWs=[1,2,3]
 
-Rmin=40.
-magFrac=0.5
+Rmin=20.
+magFrac=1.0
 
 
 plotDir="/data/mgeorge/sdsslens/plots/"
 plt.clf()
-figsize=(7,4)
-logSigLim=(1.,2.e3)
+figsize=(8,4)
+logSigLim=(0.1,5.e3)
 
 plt.rc('font',**{'family':'sans-serif','sans-serif':['Helvetica'],'size':12})
 plt.rc('text', usetex=True)
 plt.rc('axes',linewidth=1.5)
 
 fig,axarr=plt.subplots(1,2,figsize=figsize)
-fig.subplots_adjust(hspace=0,wspace=0.45)
+fig.subplots_adjust(hspace=0,wspace=0.45,bottom=0.12)
 
-starsColor="royalblue"
-haloColor="red"
+starsColor="thistle"
+haloColor="salmon"
 totalColor="black"
 starsLS="--"
 haloLS=":"
 totalLS="-"
+
+starsLabel="Stars"
+haloLabel="Halo"
+totalLabel="Total"
 
 # Setup radial binning
 Rmax=2000. # kpc - upper end of largest bin
@@ -84,16 +91,37 @@ for tt,lw in zip(target,targetLWs):
 
         # Magnification
         plt.sca(axarr[0])
-        lensmodel.plot.plotProfile(xmagfine,ymagfine,xlim=xlim,ylim=logSigLim,xlabel=r"$R$ (kpc)",ylabel=r"$\Sigma~($M$_{\odot}~$pc$^{-2})$",lw=lw,ls=totalLS)
-        lensmodel.plot.plotProfile(xmagfine,ymagstars,color=starsColor,ls=starsLS,lw=lw)
-        lensmodel.plot.plotProfile(xmagfine,ymaghalo,color=haloColor,ls=haloLS,lw=lw)
-        plt.errorbar(xmag*xoff,ymag,errmag,ecolor=scol,fmt=None,elinewidth=elw)
+        ltotal,=lensmodel.plot.plotProfile(xmagfine,ymagfine,xlim=xlim,ylim=logSigLim,xlabel=r"$R$ (kpc)",ylabel=r"$\Sigma~($M$_{\odot}~$pc$^{-2})$",lw=lw,ls=totalLS,label=totalLabel)
+        lstars,=lensmodel.plot.plotProfile(xmagfine,ymagstars,color=starsColor,ls=starsLS,lw=lw,zorder=1,label=starsLabel)
+        lhalo,=lensmodel.plot.plotProfile(xmagfine,ymaghalo,color=haloColor,ls=haloLS,lw=lw,zorder=2,label=haloLabel)
+        plt.errorbar(xmag*xoff,ymag,errmag,ecolor=scol,fmt=None,elinewidth=elw,zorder=10)
+            
 
         # Shear
         plt.sca(axarr[1])
-        lensmodel.plot.plotProfile(xshearfine,yshearfine,xlim=xlim,ylim=logSigLim,xlabel=r"$R$ (kpc)",ylabel=r"$\Delta\Sigma~($M$_{\odot}~$pc$^{-2})$",lw=lw,ls=totalLS)
-        lensmodel.plot.plotProfile(xshearfine,yshearstars,color=starsColor,ls=starsLS,lw=lw)
-        lensmodel.plot.plotProfile(xshearfine,yshearhalo,color=haloColor,ls=haloLS,lw=lw)
-        plt.errorbar(xshear*xoff,yshear,errshear,ecolor=scol,fmt=None,elinewidth=elw)
+        ltarget,=lensmodel.plot.plotProfile(xshearfine,yshearfine,xlim=xlim,ylim=logSigLim,xlabel=r"$R$ (kpc)",ylabel=r"$\Delta\Sigma~($M$_{\odot}~$pc$^{-2})$",lw=lw,ls=totalLS,label=r"log($M_{\star}$)="+tt[2:])
+        if(tt==target[0]):
+            targetLines=np.array(ltarget)
+        else:
+            targetLines=np.append(targetLines,ltarget)
+        lensmodel.plot.plotProfile(xshearfine,yshearstars,color=starsColor,ls=starsLS,lw=lw,zorder=1)
+        lensmodel.plot.plotProfile(xshearfine,yshearhalo,color=haloColor,ls=haloLS,lw=lw,zorder=2)
+        plt.errorbar(xshear*xoff,yshear,errshear,ecolor=scol,fmt=None,elinewidth=elw,zorder=10)
 
-plt.show()
+plt.sca(axarr[0])
+componentLabels=[totalLabel,haloLabel,starsLabel]
+componentLegend=plt.legend((ltotal,lhalo,lstars),componentLabels,loc="upper right",frameon=False,prop={'size':11},labelspacing=0.3)
+
+# hacky survey legend since plt.legend doesn't do errorbars well
+surveyYPos=[3.,1.5]
+surveyXPos=8.e2
+for ss,yy,scol in zip(survey,surveyYPos,surveyColors):
+    plt.text(surveyXPos*1.3,yy,string.upper(ss),ha="left",va="center")
+    plt.errorbar(surveyXPos,yy,0.2*yy,lw=elw,ecolor=scol)
+
+plt.sca(axarr[1])
+targetLabels=[r"log($M_{\star}$)="+tt[2:] for tt in target[::-1]] # [::-1] reverses order
+targetLegend=plt.legend(targetLines,targetLabels,loc="upper right",frameon=False,prop={'size':11},labelspacing=0.3)
+        
+plt.savefig(plotDir+"fiducial.pdf")
+#plt.show()
