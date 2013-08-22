@@ -14,9 +14,9 @@ surveyColors=["lightgrey","slategray"]
 elw=2
 
 #target=["galaxy","cluster"]
-target=["sm9.5","sm10.5","sm11.5"]
+target=["sm10.5","sm11.5"]
 #targetLWs=[2,4]
-targetLWs=[1,2,3]
+targetLWs=[2,3]
 
 Rmin=20.
 magFrac=1.0
