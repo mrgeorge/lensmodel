@@ -44,12 +44,13 @@ def getModelPars(target):
     AGnedin=-1.
     wGnedin=-1.
     inputPars=[logMstars, logRstars, logMhalo, conc, innerSlopeGNFW, nuDutton, AGnedin, wGnedin]
-    allLabels=np.array(["log(SM)","log(Reff)","log(Mh)","conc","inner slope","nuDutton","AGnedin","wGnedin"])
+    allLabels=np.array(["logSM","logrh","logMh","conc","inner slope","nuDutton","AGnedin","wGnedin"])
+    allPlotLabels=np.array([r"log($M_{\star}$)",r"log($r_{\star}$)",r"log($M_h$)",r"$c$",r"$\beta$",r"$\nu$",r"$A_G$",r"$w_G$"])
     cenType="hernquist"
     odType="critical"
     delta=200.
 
-    return (n_lens,z_lens,inputPars,allLabels,cenType,odType,delta)
+    return (n_lens,z_lens,inputPars,allLabels,allPlotLabels,cenType,odType,delta)
 
 def getRadialBins(Rmin,Rmax,dlog10R):
     nBins=np.floor(np.log10(Rmax/Rmin)/dlog10R)+1
@@ -85,7 +86,7 @@ def main(survey, target, Rmin, magFrac, concPriorType, nThreads=8):
     n_source,z_source,A_survey=getSurveyPars(survey)
 
     # Input model pars
-    n_lens,z_lens,inputPars,allLabels,cenType,odType,delta=getModelPars(target)
+    n_lens,z_lens,inputPars,allLabels,allPlotLabels,cenType,odType,delta=getModelPars(target)
     logMstars, logRstars, logMhalo, conc, innerSlopeGNFW, nuDutton, AGnedin, wGnedin=inputPars
 
     # Choose free parameters and set priors
@@ -104,6 +105,7 @@ def main(survey, target, Rmin, magFrac, concPriorType, nThreads=8):
         raise ValueError(concPriorType)
     freePars=[inputPars[ii] for ii in freeInd]
     labels=allLabels[freeInd]
+    plotLabels=allPlotLabels[freeInd]
 
     priors=[[logMstars-0.5,logMstars+0.5],float(logRstars),[logMhalo-0.5,logMhalo+0.5],concPrior,float(innerSlopeGNFW),[-0.2,1.0],float(AGnedin),float(wGnedin)]
 
@@ -146,7 +148,7 @@ def main(survey, target, Rmin, magFrac, concPriorType, nThreads=8):
     lensmodel.io.writeRec(lensmodel.io.chainToRec(chains[2],lnprobs[2],labels=labels),dataDir+"chainSM_{}.fits.gz".format(suffix))
 
     smooth=3
-    lensmodel.plot.contourPlotAll(chains,lnprobs=lnprobs,inputPars=freePars,smooth=smooth,labels=labels,showPlot=False,filename=plotDir+"contours_{}.pdf".format(suffix))
+    lensmodel.plot.contourPlotAll(chains,lnprobs=lnprobs,inputPars=freePars,smooth=smooth,percentiles=[0.68,0.95],labels=plotLabels,showPlot=False,filename=plotDir+"contours_{}.pdf".format(suffix))
 
 
 if __name__ == "__main__":
