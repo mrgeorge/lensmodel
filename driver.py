@@ -7,15 +7,15 @@ import sys
 def getSurveyPars(survey):
     if(survey=="sdss"):
         n_source=1.2 # N shear sources / sq. arcmin (Reyes 2012)
-        z_source=1. # effective source redshift [actually mean=0.42, med=0.39 from N11]
+        z_source=0.39 # effective source redshift [actually mean=0.42, med=0.39 from N11 according to R12]
         A_survey=9243. # survey area in deg**2 (Reyes 2012 DR8 - they used only 7131 for DR7 lenses)
     elif(survey=="des"):
         n_source=12. # DES proposal https://www.darkenergysurvey.org/reports/proposal-standalone.pdf
-        z_source=1. # DES proposal uses zmed=0.68
+        z_source=0.68 # DES proposal uses zmed=0.68
         A_survey=5000. # DES proposal
     elif(survey=="lsst"):
         n_source=37. # Chang 2013
-        z_source=1. # Chang 2013 zmed = 0.82 for fiducial case 1. in Table 2
+        z_source=0.82 # Chang 2013 zmed = 0.82 for fiducial case 1. in Table 2
         A_survey=18000. # Chang 2013
     else:
         raise ValueError(survey)
@@ -43,7 +43,7 @@ def getModelPars(target):
     elif(target[:2]=="sm"): # e.g. sm9.5
         logMstars=float(target[2:]) # parse target name to get log10 stellar mass
         z_lens=0.1
-        dz_lens=0.05 # redshift range for lens sample centered on z_lens
+        dz_lens=0.1 # redshift range for lens sample centered on z_lens
         dlog10SM=0.5 # log10 SM bin width centered on logMstars
         n_lens=lensmodel.profiles.liwhiteSMF(logMstars)*lensmodel.profiles.cosmo.V(z_lens-0.5*dz_lens,z_lens+0.5*dz_lens) * dlog10SM * (np.pi/180.)**2/(4.*np.pi) # Li & White give SMF in N/Mpc**3/dex, this converts to N/deg**2 given survey depth dz_lens
         logRstars=0.5 # TO DO - use mass-size relation?
