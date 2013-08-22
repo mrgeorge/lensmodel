@@ -205,12 +205,17 @@ def rhoMatter(redshift):
     rhoM=rhoCritical(redshift)*cosmo.omega_m()*(1.+redshift)**3
     return rhoM
 
+def deltaVir(redshift):
+    # Bryan & Norman 1998, as written in footnote 5 of Behroozi 2010
+    xx=1./(1.+cosmo.omega_l()/(cosmo.omega_m()*(1.+redshift)**3)) - 1.
+    delta=(18.*np.pi**2 + 82.*xx -39*xx**2)/(1.+xx)
+    return delta
+    
+
 def overdensity(redshift, delta=200., type="critical"):
     """Return overdensity of given type in Msun/pc**3."""
     if(delta=="vir"):
-        # Bryan & Norman 1998, as written in footnote 5 of Behroozi 2010
-        xx=1./(1.+cosmo.omega_l()/(cosmo.omega_m()*(1.+redshift)**3)) - 1.
-        delta=(18.*np.pi**2 + 82.*xx -39*xx**2)/(1.+xx)
+        delta=deltaVir(redshift)
 
     if(type=="critical"):
         od=delta*rhoCritical(redshift)
@@ -530,7 +535,7 @@ def stellarMassToHaloMass(logSM, redshift):
 
     # Eq. 21
     logMhalo=logM1 + beta*(logSM - logSM0) + 10.**(delta*(logSM-logSM0)) / (1.+10.**(-gamma*(logSM-logSM0))) - 0.5
-    return 10.**logMhalo
+    return logMhalo
 
 def schechterSMF(logSM,phiStar,alpha,logMstar):
     return phiStar * 10.**((logSM - logMstar)* alpha) * np.exp(-10.**(logSM - logMstar))
@@ -566,3 +571,78 @@ def liwhiteSMF(logSM):
     phi=phi_h3 * (cosmo.H0()/100.)**3
     
     return phi
+
+def hkC3(xx):
+    """Hu & Kravtsov equation C3"""
+    return xx**3 * (np.log(1.+1./xx) - 1./(1.+xx))
+
+def hkC11(ff):
+    """Hu & Kravtsov equation C11"""
+    
+    a1=0.5116
+    a2=-0.4283
+    a3=-3.13e-3
+    a4=-3.52e-5
+
+    pp=a2 + a3 * np.log(ff) + a4 * np.log(ff)**2
+    
+    xx=(a1 * ff**(2.*pp) + (3./4)**2)**(-0.5) + 2 * ff
+    return xx
+    
+def convertHaloMass(logMvir,cvir,redshift,delta,odType):
+    """Convert virial halo mass to another overdensity definition.
+
+    Follows Appendix C of Hu & Kravtsov 2003
+    Inputs:
+        logMvir - log10 virial halo mass (assumes overdensity is deltaVir * rhoMatter)
+        cvir - virial radius / scale radius
+        redshift
+        delta - desired overdensity of output halo mass
+        odType - output mass overdensity relative to critical or background
+    Return:
+        logMhalo - log10 halo mass for specified overdensity
+    """
+
+    if(delta=="vir"):
+        delta=deltaVir(redshift)
+    
+    deltaV=deltaVir(redshift)
+
+    f1c=hkC3(1./cvir) # f(1/c) in C8 and C9
+
+    if(odType=="background"):
+        dHdV=delta/deltaV # DeltaH/DeltaV, both using background
+    elif(odType=="critical"):
+        dHdV=delta/(deltaV*cosmo.omega_m()) # DeltaH*rho_c/DeltaV*rho_m
+    else:
+        raise ValueError(odType)
+
+    fh=dHdV*f1c # rhs arg in C9
+    
+    xx=hkC11(fh) # C9
+
+    logMhalo=logMvir + np.log10(dHdV * (cvir*xx)**(-3)) # C10
+
+    return logMhalo
+
+def massSize(logSM,type="early"):
+    """Mass-size relation from Shen et al 2003 (SDSS) with 2007 Erratum
+    Returns logR (kpc) [z-band Sersic half-light radii]
+    """
+
+    # TO DO - test , this doesn't seem right, since half-light radii should be larger than deV but these values are pretty small
+    
+    if(type=="early"): # Eq 17
+        bb=2.88e-6 # correction from 2007 Erratum
+        aa=0.56
+        logR=np.log10(bb) + aa * logSM
+    elif(type=="late"): # Eq 18
+        gamma=0.10
+        alpha=0.14
+        beta=0.39
+        M0=3.98e10
+        SM=10.**logSM
+        Rkpc=gamma * SM**alpha * (1.+SM/M0)**(beta-alpha)
+        logR=np.log10(Rkpc)
+
+#    return logR
