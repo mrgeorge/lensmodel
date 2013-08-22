@@ -136,7 +136,8 @@ def main(survey, target, Rmin, magFrac, concPriorType, nThreads=8):
     ymag=lensmodel.profiles.sigma(inputPars,xmag)
 
     # Estimate errors starting with shape noise for shear and using magFrac to scale to magnification errors
-    sigma_shear=0.4 # shape noise
+    sigma_ell=0.4 # rms ellipticity per component
+    sigma_shear=sigma_ell/(2.*(1.-sigma_ell**2)) # shape noise conversion dividing by responsivity R~2(1-erms**2) cf. e.g. Hirata 2004
     Sigma_crit=1./lensmodel.profiles.cosmo.sigmacritinv(z_lens, z_source) # in Msun/pc**2
     xarea_kpc2=np.pi*(xbins[1:]**2 - xbins[:-1]**2)
     xarea_arcmin2=xarea_kpc2/(lensmodel.profiles.cosmo.Da(0.,z_lens) * 1000. * np.deg2rad(1./60.))**2 # denom is (kpc/arcmin)**2
