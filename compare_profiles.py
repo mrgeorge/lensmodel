@@ -3,24 +3,30 @@
 import matplotlib.pyplot as plt
 import lensmodel
 import numpy as np
+import driver
+
+plotDir="/data/mgeorge/sdsslens/plots/"
+
+starsColor="thistle"
+nfwColor="black"
+acColor="royalblue"
+expColor="green"
+starsLS="--"
+nfwLS="-"
+acLS="--"
+expLS=":"
 
 # Input model pars
-redshift=0.11
-mstars=7.e10
-mhalo=0.7e13
-conc=9.
-Rdev=4.3/(1.+redshift) # convert Schulz' comoving coords to physical
-rhern=lensmodel.profiles.RdevTorHern(Rdev)
-innerSlopeGNFW=1.
+target="sm10.5"
+n_lens,z_lens,inputPars,allLabels,allPlotLabels,cenType,odType,delta=driver.getModelPars(target)
+logMstars, logRstars, logMhalo, conc, innerSlopeGNFW, nuDutton, AGnedin, wGnedin=inputPars
 nuDuttonAC=1.
 nuDuttonExp=-0.2
-AGnedin=-1.
-wGnedin=-1.
-cenType="hernquist"
-odType="background"
-delta=200.
+mstars=10.**logMstars
+rhern=10.**logRstars
+mhalo=10.**logMhalo
 
-od=lensmodel.profiles.overdensity(redshift=redshift,delta=delta,type=odType)
+od=lensmodel.profiles.overdensity(redshift=z_lens,delta=delta,type=odType)
 
 Rmin=1. # kpc - note this is the geometric bin center, so measurements would need to go to radii 0.5*bin width smaller
 Rmax=1000. # kpc - Use only bins at R<1Mpc
@@ -48,8 +54,8 @@ deltaSigmaHern=lensmodel.profiles.deltaSigmaHernquist(Rkpc,mstars,rhern)
 
 plt.clf()
 figsize=(10,5)
-logSigLim=(1.,2.e3)
-logRhoLim=(1.e-8,1.)
+logSigLim=(1.,1.e3)
+logRhoLim=(1.e-8,0.3)
 linYLim=(0.65,1.14)
 lw=3
 
@@ -61,10 +67,10 @@ fig,axarr=plt.subplots(2,3,figsize=figsize)
 fig.subplots_adjust(hspace=0,wspace=0.45)
 
 plt.sca(axarr[0,0])
-lAC,=lensmodel.plot.plotProfile(rkpc,rhoAC,xlim=(Rmin,Rmax),ylim=logRhoLim,xscale="log",yscale="log",ylabel=r"$\rho~($M$_{\odot}~$pc$^{-3})$",label="AC",color="blue",ls="--")
-lNFW,=lensmodel.plot.plotProfile(rkpc,rhoNFW,label="NFW",color="black",ls="-",lw=1)
-lExp,=lensmodel.plot.plotProfile(rkpc,rhoExp,label="Expansion",color="red",ls=":")
-lHern,=lensmodel.plot.plotProfile(rkpc,rhoHern,label="Stars",color="gray",ls="--",lw=1)
+lAC,=lensmodel.plot.plotProfile(rkpc,rhoAC,xlim=(Rmin,Rmax),ylim=logRhoLim,xscale="log",yscale="log",ylabel=r"$\rho~($M$_{\odot}~$pc$^{-3})$",label="AC",color=acColor,ls=acLS)
+lNFW,=lensmodel.plot.plotProfile(rkpc,rhoNFW,label="NFW",color=nfwColor,ls=nfwLS,lw=1)
+lExp,=lensmodel.plot.plotProfile(rkpc,rhoExp,label="Expansion",color=expColor,ls=expLS)
+lHern,=lensmodel.plot.plotProfile(rkpc,rhoHern,label="Stars",color=starsColor,ls=starsLS,lw=1)
 plt.setp(axarr[0,0].get_xticklabels(),visible=False)
 
 starsLegend=plt.legend([lHern],[lHern.get_label()],loc="upper right", frameon=False,prop={'size':12}) # this gets erased once haloLegend is made so we'll add it back in after
@@ -74,36 +80,36 @@ haloLegend.get_title().set_ha("center")
 plt.gca().add_artist(starsLegend)
 
 plt.sca(axarr[0,1])
-lensmodel.plot.plotProfile(Rkpc,sigmaAC,xlim=(Rmin,Rmax),ylim=logSigLim,xscale="log",yscale="log",ylabel=r"$\Sigma~($M$_{\odot}~$pc$^{-2})$",color="blue",ls="--")
+lensmodel.plot.plotProfile(Rkpc,sigmaAC,xlim=(Rmin,Rmax),ylim=logSigLim,xscale="log",yscale="log",ylabel=r"$\Sigma~($M$_{\odot}~$pc$^{-2})$",color=acColor,ls=acLS)
 lensmodel.plot.plotProfile(Rkpc,sigmaNFW,lw=1)
-lensmodel.plot.plotProfile(Rkpc,sigmaExp,color="red",ls=":")
-lensmodel.plot.plotProfile(Rkpc,sigmaHern,color="gray",ls="--",lw=1)
+lensmodel.plot.plotProfile(Rkpc,sigmaExp,color=expColor,ls=expLS)
+lensmodel.plot.plotProfile(Rkpc,sigmaHern,color=starsColor,ls=starsLS,lw=1)
 plt.setp(axarr[0,1].get_xticklabels(),visible=False)
 
 plt.sca(axarr[0,2])
-lensmodel.plot.plotProfile(Rkpc,deltaSigmaAC,xlim=(Rmin,Rmax),ylim=logSigLim,xscale="log",yscale="log",ylabel=r"$\Delta\Sigma~($M$_{\odot}~$pc$^{-2})$",color="blue",ls="--")
+lensmodel.plot.plotProfile(Rkpc,deltaSigmaAC,xlim=(Rmin,Rmax),ylim=logSigLim,xscale="log",yscale="log",ylabel=r"$\Delta\Sigma~($M$_{\odot}~$pc$^{-2})$",color=acColor,ls=acLS)
 lensmodel.plot.plotProfile(Rkpc,deltaSigmaNFW,lw=1)
-lensmodel.plot.plotProfile(Rkpc,deltaSigmaExp,color="red",ls=":")
-lensmodel.plot.plotProfile(Rkpc,deltaSigmaHern,color="gray",ls="--",lw=1)
+lensmodel.plot.plotProfile(Rkpc,deltaSigmaExp,color=expColor,ls=expLS)
+lensmodel.plot.plotProfile(Rkpc,deltaSigmaHern,color=starsColor,ls=starsLS,lw=1)
 plt.setp(axarr[0,2].get_xticklabels(),visible=False)
 
 plt.sca(axarr[1,0])
-lensmodel.plot.plotProfile(rkpc,rhoAC/rhoNFW,xlim=(Rmin,Rmax),ylim=linYLim,xscale="log",yscale="linear",ylabel=r"$\rho/\rho_{NFW}$",xlabel=r"$r$ (kpc)",color="blue",ls="--")
-lensmodel.plot.plotProfile(rkpc,rhoNFW/rhoNFW,yscale="linear",color="black",ls="-",lw=1)
-lensmodel.plot.plotProfile(rkpc,rhoExp/rhoNFW,yscale="linear",color="red",ls=":")
-lensmodel.plot.plotProfile(rkpc,rhoHern/rhoNFW,yscale="linear",color="gray",ls="--",lw=1)
+lensmodel.plot.plotProfile(rkpc,rhoAC/rhoNFW,xlim=(Rmin,Rmax),ylim=linYLim,xscale="log",yscale="linear",ylabel=r"$\rho/\rho_{NFW}$",xlabel=r"$r$ (kpc)",color=acColor,ls=acLS)
+lensmodel.plot.plotProfile(rkpc,rhoNFW/rhoNFW,yscale="linear",color=nfwColor,ls=nfwLS,lw=1)
+lensmodel.plot.plotProfile(rkpc,rhoExp/rhoNFW,yscale="linear",color=expColor,ls=expLS)
+lensmodel.plot.plotProfile(rkpc,rhoHern/rhoNFW,yscale="linear",color=starsColor,ls=starsLS,lw=1)
 
 plt.sca(axarr[1,1])
-lensmodel.plot.plotProfile(Rkpc,sigmaAC/sigmaNFW,xlim=(Rmin,Rmax),ylim=linYLim,xscale="log",yscale="linear",ylabel=r"$\Sigma/\Sigma_{NFW}$",xlabel=r"$R$ (kpc)",color="blue",ls="--")
-lensmodel.plot.plotProfile(Rkpc,sigmaNFW/sigmaNFW,yscale="linear",color="black",ls="-",lw=1)
-lensmodel.plot.plotProfile(Rkpc,sigmaExp/sigmaNFW,yscale="linear",color="red",ls=":")
-lensmodel.plot.plotProfile(Rkpc,sigmaHern/sigmaNFW,yscale="linear",color="gray",ls="--",lw=1)
+lensmodel.plot.plotProfile(Rkpc,sigmaAC/sigmaNFW,xlim=(Rmin,Rmax),ylim=linYLim,xscale="log",yscale="linear",ylabel=r"$\Sigma/\Sigma_{NFW}$",xlabel=r"$R$ (kpc)",color=acColor,ls=acLS)
+lensmodel.plot.plotProfile(Rkpc,sigmaNFW/sigmaNFW,yscale="linear",color=nfwColor,ls=nfwLS,lw=1)
+lensmodel.plot.plotProfile(Rkpc,sigmaExp/sigmaNFW,yscale="linear",color=expColor,ls=expLS)
+lensmodel.plot.plotProfile(Rkpc,sigmaHern/sigmaNFW,yscale="linear",color=starsColor,ls=starsLS,lw=1)
 
 plt.sca(axarr[1,2])
-lensmodel.plot.plotProfile(Rkpc,deltaSigmaAC/deltaSigmaNFW,xlim=(Rmin,Rmax),ylim=linYLim,xscale="log",yscale="linear",ylabel=r"$\Delta\Sigma/\Delta\Sigma_{NFW}$",xlabel=r"$R$ (kpc)",color="blue",ls="--")
-lensmodel.plot.plotProfile(Rkpc,deltaSigmaNFW/deltaSigmaNFW,yscale="linear",color="black",ls="-",lw=1)
-lensmodel.plot.plotProfile(Rkpc,deltaSigmaExp/deltaSigmaNFW,yscale="linear",color="red",ls=":")
-lensmodel.plot.plotProfile(Rkpc,deltaSigmaHern/deltaSigmaNFW,yscale="linear",color="gray",ls="--",lw=1)
+lensmodel.plot.plotProfile(Rkpc,deltaSigmaAC/deltaSigmaNFW,xlim=(Rmin,Rmax),ylim=linYLim,xscale="log",yscale="linear",ylabel=r"$\Delta\Sigma/\Delta\Sigma_{NFW}$",xlabel=r"$R$ (kpc)",color=acColor,ls=acLS)
+lensmodel.plot.plotProfile(Rkpc,deltaSigmaNFW/deltaSigmaNFW,yscale="linear",color=nfwColor,ls=nfwLS,lw=1)
+lensmodel.plot.plotProfile(Rkpc,deltaSigmaExp/deltaSigmaNFW,yscale="linear",color=expColor,ls=expLS)
+lensmodel.plot.plotProfile(Rkpc,deltaSigmaHern/deltaSigmaNFW,yscale="linear",color=starsColor,ls=starsLS,lw=1)
 
 
-plt.savefig("../plots/compareAC.pdf")
+plt.savefig(plotDir+"compareAC.pdf")
