@@ -12,7 +12,9 @@ cosmo=esutil.cosmology.Cosmo(h=0.7,omega_m=0.3,omega_l=0.7)
 # r for 3d, R for 2d
 # 200c for default overdensity
 
-Rkpcfine=np.logspace(0,3.5,num=50) # used for more extended / finer sampling when interpolating
+extFactor=100. # used to define extfactor*rvir; contracted profiles are extended following NFW here
+truncFactor=100 # used to define truncFactor*rvir; rhoToSigma integral is truncated here
+Rkpcfine=np.logspace(0,3.5,num=100) # used for more extended / finer sampling when interpolating
 rkpcfine=Rkpcfine
 
 ####
@@ -155,19 +157,38 @@ def deltaSigma(pars, Rkpc, redshift=0.1, cenType="hernquist", delta=200., odType
 ####
 # Profile conversions via integration
 ####
-def rhoToSigma(rkpc_out, rkpc_in, rho):
+def rhoToSigma(Rkpc_out, rkpc_in, rho, rtrunc=np.inf):
     """Return surface mass density profile by interpolating and integrating rho.
     Inputs:
-        rkpc_out - radius in kpc for DS to be sampled on
+        Rkpc_out - radius in kpc for DS to be sampled on
         rkpc_in - radius in kpc at which input rho is sampled
         rho - mass density in Msun/pc**3, same length as rkpc_in
+        rtrunc - radius to integrate density profile along LOS (default=inf)
     Returns:
-        sigma - surface mass density in Msun/pc**2, same length as rkpc_out
+        sigma - surface mass density in Msun/pc**2, same length as Rkpc_out
     """
     logInterp=scipy.interpolate.UnivariateSpline(np.log10(rkpc_in),np.log10(rho),s=0) # cubic spline interpolation on log axes. Allows extrapolation.
-    integrand=lambda theta,r: (r/np.cos(theta)**2) * 10.**logInterp(np.log10(r/np.cos(theta))) # convert linear coords for logInterp
-    sigma=2.*np.array([scipy.integrate.quad(integrand,0,np.pi/2.,args=(rr))[0] for rr in rkpc_out]) * 1.e3
+    sigma=2.*np.array([scipy.integrate.quad(rhoTruncIntegrand,0,np.pi/2.,args=(RR,rtrunc,logInterp))[0] for RR in Rkpc_out]) * 1.e3
     return sigma
+
+def rhoTruncIntegrand(theta, Rkpc, rtrunc, logInterp):
+    rlos=Rkpc/np.cos(theta)
+    low=(rlos <= rtrunc)
+    high=(rlos > rtrunc)
+    if(isinstance(rlos,collections.Iterable)):
+        integrand=np.zeros(len(rlos))
+        integrand[low]=(rlos[low]/np.cos(theta[low])) * 10.**logInterp(np.log10(rlos[low]))
+        integrand[high]=0.
+    else:
+        if(low):
+            integrand=(rlos/np.cos(theta)) * 10.**logInterp(np.log10(rlos))
+        elif(high):
+            integrand=0.
+        else:
+            raise ValueError(rlos)
+
+    return integrand
+            
 
 def sigmaToDeltaSigma(Rkpc_out, Rkpc_in, sigma):
     """Return DS profile by interpolating and integrating sigma.
@@ -436,7 +457,7 @@ def RdevTorHern(Rdev):
 ####
 # Wrappers to CONTRA for contracted profiles
 ####
-def rhoAC(rkpc, mhalo, conc, od, MAC, isl, nuac, Aac, wac, mstars, rstars, nrad=81):
+def rhoAC(rkpc, mhalo, conc, od, MAC, isl, nuac, Aac, wac, mstars, rstars, nrad=200):
     """Return contracted profile at rkpc in Msun/pc**3.
     Calls Gnedin's CONTRA code and goes to GNFW beyond rhalo.
     """
@@ -453,7 +474,6 @@ def rhoAC(rkpc, mhalo, conc, od, MAC, isl, nuac, Aac, wac, mstars, rstars, nrad=
     rhocontra=acProfile[1]*(mhalo+mstars)/(1.e3*rhalo)**3 # Msun/pc**3 - note, contra's mass is defined such that Mtot = Mhalo+Mstars = 1. The rho returned is DM only.
 
     # extend AC profile using GNFW outside virial radius
-    extFactor=10.
     rExt,rhoExt=appendRhoGNFW(rcontra,rhocontra,rhalo,conc,isl,od,extFactor)
     
     # interpolate onto rkpc
@@ -479,13 +499,13 @@ def appendRhoGNFW(rkpc,rho,rhalo,conc,isl,od,extFactor):
     rhoNew=np.append(rho,rhoExt)
     return (rNew,rhoNew)
 
-def sigmaAC(Rkpc, mhalo, conc, od, MAC, innerSlopeGNFW, nuDutton, AGnedin, wGnedin, mstars, rstars, nrad=81):
+def sigmaAC(Rkpc, mhalo, conc, od, MAC, innerSlopeGNFW, nuDutton, AGnedin, wGnedin, mstars, rstars, nrad=200):
     """Return surface mass density for contracted profile in Msun/pc**2.
     Simply calls rhoToSigma, lacking an analytic profile.
     """
-    return rhoToSigma(Rkpc, rkpcfine, rhoAC(rkpcfine, mhalo, conc, od, MAC, innerSlopeGNFW, nuDutton, AGnedin, wGnedin, mstars, rstars, nrad=nrad))
+    return rhoToSigma(Rkpc, rkpcfine, rhoAC(rkpcfine, mhalo, conc, od, MAC, innerSlopeGNFW, nuDutton, AGnedin, wGnedin, mstars, rstars, nrad=nrad), rtrunc=truncFactor*haloRadius(mhalo,od))
 
-def deltaSigmaAC(Rkpc, mhalo, conc, od, MAC, innerSlopeGNFW, nuDutton, AGnedin, wGnedin, mstars, rstars, nrad=81):
+def deltaSigmaAC(Rkpc, mhalo, conc, od, MAC, innerSlopeGNFW, nuDutton, AGnedin, wGnedin, mstars, rstars, nrad=200):
     """Return DS for contracted profile in Msun/pc**2.
     Simply calls sigmaToDeltaSigma, lacking an analytic profile.
     """
