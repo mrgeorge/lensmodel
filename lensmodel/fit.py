@@ -219,9 +219,9 @@ def fitObs(priors,xshear,yshear,errshear,xmag,ymag,errmag,**kwargs):
     goodS=(flatlnprobS > -np.Inf)
     goodSM=(flatlnprobSM > -np.Inf)
 
-    print "M finite fraction: {0.3f}".format(float(len(flatlnprobM))/len(goodM.nonzero()[0]))
-    print "S finite fraction: {0.3f}".format(float(len(flatlnprobS))/len(goodS.nonzero()[0]))
-    print "SM finite fraction: {0.3f}".format(float(len(flatlnprobSM))/len(goodSM.nonzero()[0]))
+    print "M finite fraction: {0:.3f}".format(float(len(goodM.nonzero()[0]))/len(flatlnprobM))
+    print "S finite fraction: {0:.3f}".format(float(len(goodS.nonzero()[0]))/len(flatlnprobS))
+    print "SM finite fraction: {0:.3f}".format(float(len(goodSM.nonzero()[0]))/len(flatlnprobSM))
     
     chains=[flatchainM[goodM], flatchainS[goodS], flatchainSM[goodSM]]
     lnprobs=[flatlnprobM[goodM],flatlnprobS[goodS],flatlnprobSM[goodSM]]
