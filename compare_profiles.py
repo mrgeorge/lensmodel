@@ -35,7 +35,7 @@ dlog10R=np.log10(Rmax/Rmin)/(nBins-1)
 Rkpc=Rmin*10.**(np.arange(nBins) * dlog10R)
 rkpc=Rkpc
 
-nradAC=500
+nradAC=200
 
 rhoNFW=lensmodel.profiles.rhoNFW(rkpc, mhalo, conc, od)
 rhoAC=lensmodel.profiles.rhoAC(rkpc, mhalo, conc, od, 2, innerSlopeGNFW, nuDuttonAC, AGnedin, wGnedin, mstars, rhern, nrad=nradAC)
