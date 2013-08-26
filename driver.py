@@ -72,7 +72,7 @@ def getRadialBins(Rmin,Rmax,dlog10R):
 
     return (xbins,xshear)
 
-def main(survey, target, Rmin, magFrac, concPriorType, nThreads=8):
+def main(survey, target, Rmin, magFrac, concPriorType, nThreads=8, nWalkers=2000, nBurn=100, nSteps=2000, seed=7):
     """Forecast model constraints for a given lensing experiment
 
     Inputs:
@@ -148,11 +148,6 @@ def main(survey, target, Rmin, magFrac, concPriorType, nThreads=8):
 
 
     # Run chains
-    nWalkers=2000
-    nBurn=100
-    nSteps=2000
-    seed=7
-
     chains,lnprobs=lensmodel.fit.fitObs(priors,xshear,yshear,errshear,xmag,ymag,errmag,redshift=z_lens,cenType=cenType,delta=delta,odType=odType,nWalkers=nWalkers,nBurn=nBurn,nSteps=nSteps,nThreads=nThreads,seed=seed)
 
 
