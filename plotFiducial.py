@@ -77,7 +77,7 @@ for tt,lw in zip(target,targetLWs):
         n_source,z_source,A_survey=driver.getSurveyPars(ss)
 
         # Estimate errors starting with shape noise for shear and using magFrac to scale to magnification errors
-        sigma_shear=0.4 # shape noise
+        sigma_shear=0.25 # shape noise
         Sigma_crit=1./lensmodel.profiles.cosmo.sigmacritinv(z_lens, z_source) # in Msun/pc**2
         xarea_kpc2=np.pi*(xbins[1:]**2 - xbins[:-1]**2)
         xarea_arcmin2=xarea_kpc2/(lensmodel.profiles.cosmo.Da(0.,z_lens) * 1000. * np.deg2rad(1./60.))**2 # denom is (kpc/arcmin)**2
