@@ -20,6 +20,7 @@ expLS=":"
 target="sm10.5"
 n_lens,z_lens,inputPars,allLabels,allPlotLabels,cenType,odType,delta=driver.getModelPars(target)
 logMstars, logRstars, logMhalo, conc, innerSlopeGNFW, nuDutton, AGnedin, wGnedin=inputPars
+#z_lens,odType,delta,logMstars,logRstars,logMhalo,conc,innerSlopeGNFW,nuDutton,AGnedin,wGnedin=0.1,"critical",200.,11.,np.log10(lensmodel.profiles.RdevTorHern(10.)),15.,5.,1.,0.,-1.,-1.
 nuDuttonAC=1.
 nuDuttonExp=-0.2
 mstars=10.**logMstars
