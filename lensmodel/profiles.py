@@ -188,8 +188,13 @@ def rhoTruncIntegrand(theta, Rkpc, rtrunc, logInterp):
             raise ValueError(rlos)
 
     return integrand
-            
 
+def rhoToMenclosed(rkpc_out, rkpc_in, rho):
+    logInterp=scipy.interpolate.UnivariateSpline(np.log10(rkpc_in),np.log10(rho),s=0) # cubic spline interpolation on log axes. Allows extrapolation.
+    integrand=lambda r: r**2 * 10.**logInterp(np.log10(r)) * 1.e9
+    massEnclosed=4.*np.pi*np.array([scipy.integrate.quad(integrand,0,rr)[0] for rr in rkpc_out])
+    return massEnclosed
+    
 def sigmaToDeltaSigma(Rkpc_out, Rkpc_in, sigma):
     """Return DS profile by interpolating and integrating sigma.
     Based on e.g. Wright & Brainerd 2000, Eq. 13 line 1
