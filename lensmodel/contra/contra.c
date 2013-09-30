@@ -236,7 +236,7 @@ double y( double x, double *d )
 }
 
 
-double mb( double x, double *d )         /* final baryon mass distribution - Mass shells */
+double mb( double x, double *d )         /* final baryon mass distribution - enclosed mass M(<x) */
 {
   double f=0.0, p, a, arg, argc;
 
