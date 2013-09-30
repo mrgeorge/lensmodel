@@ -30,12 +30,20 @@ mstars=10.**logMstars
 rstars=10.**logRstars
 mhalo=10.**logMhalo
 
-Rmin=40. # kpc - note this is the geometric bin center, so measurements would need to go to radii 0.5*bin width smaller
+Rmin=1. # kpc - note this is the geometric bin center, so measurements would need to go to radii 0.5*bin width smaller
 Rmax=1000. # kpc - Use only bins at R<1Mpc
-dlog10R=0.15 # log bin spacing
-nBins=np.floor(np.log10(Rmax/Rmin)/dlog10R)+1
+nBins=50
+dlog10R=np.log10(Rmax/Rmin)/(nBins-1)
 Rkpc=Rmin*10.**(np.arange(nBins) * dlog10R)
 rkpc=Rkpc
+
+
+#Rmin=40. # kpc - note this is the geometric bin center, so measurements would need to go to radii 0.5*bin width smaller
+#Rmax=1000. # kpc - Use only bins at R<1Mpc
+#dlog10R=0.15 # log bin spacing
+#nBins=np.floor(np.log10(Rmax/Rmin)/dlog10R)+1
+#Rkpc=Rmin*10.**(np.arange(nBins) * dlog10R)
+#rkpc=Rkpc
 nradContra=200
 
 decimal=2 # almost_equal assertions valid when abs(desired-actual) < 0.5 * 10**(-decimal)
@@ -120,6 +128,19 @@ def test_deltaSigma_blum_vs_dutton():
     assert(~np.isnan(deltaSigmaBlum).any())
     np.testing.assert_array_almost_equal((deltaSigmaDutton-deltaSigmaBlum)/deltaSigmaBlum,np.zeros(len(rkpc)),decimal=decimal,err_msg="deltaSigmaBlum != deltaSigmaDutton(nu=1)")
 
+
+def test_mnfw():
+    rhoNFW=lensmodel.profiles.rhoNFW(rkpc, mhalo, conc, od)
+    rhalo=lensmodel.profiles.haloRadius(mhalo, od)
+    massNFW=lensmodel.profiles.rhoToMenclosed(np.array([rhalo]), rkpc, rhoNFW)[0]
+    np.testing.assert_almost_equal((massNFW-mhalo)/mhalo, 0., decimal=decimal,err_msg="massNFW(<rhalo) != mhalo")
+    
+def test_mblum():
+    rhoBlum=lensmodel.profiles.rhoAC(rkpc, mhalo, conc, od, 0, 1., 1., -1., -1., mstars, rstars, nrad=nradContra)
+    rhalo=lensmodel.profiles.haloRadius(mhalo, od)
+    massBlum=lensmodel.profiles.rhoToMenclosed(np.array([rhalo]), rkpc, rhoBlum)[0]
+    np.testing.assert_almost_equal((massBlum-mhalo)/mhalo, 0., decimal=decimal,err_msg="massBlum(<rhalo) != mhalo")
+    
     #def test_rho_gnedin_vs_dutton():
     #    rhoGnedin=lensmodel.profiles.rhoAC(rkpc, mhalo, conc, od, 1, 1., 1., 0.85, 0.8, mstars, rstars)
     #    rhoDutton=lensmodel.profiles.rhoAC(rkpc, mhalo, conc, od, 2, 1., 0.8, -1., -1., mstars, rstars)
